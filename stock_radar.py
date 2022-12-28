@@ -11,7 +11,7 @@ class StockTestcase(unittest.TestCase):
     # def testSave(self):
     #     pass
 
-    def testDiffDay(self):
+    def testLastDate(self):
         ticker = 'NKE'
         a = '''2022-12-27 09:30:00,116.47000122070312,117.55000305175781,115.81999969482422,117.30999755859375,117.30999755859375,1100997,NKE
 2022-12-27 10:30:00,117.31500244140625,118.0,117.31500244140625,117.81999969482422,117.81999969482422,1070766,NKE
@@ -28,7 +28,27 @@ class StockTestcase(unittest.TestCase):
         with patch("builtins.open", mock_open(read_data= a)) as mock_file:
             result = tester.getLastDate("path/to/open",ticker)
             assert result == ['2022', '12', '28']
-            
+
+    def testUpdate(self):
+        ticker = 'NKE'
+        a = '''2022-12-27 09:30:00,116.47000122070312,117.55000305175781,115.81999969482422,117.30999755859375,117.30999755859375,1100997,NKE
+2022-12-27 10:30:00,117.31500244140625,118.0,117.31500244140625,117.81999969482422,117.81999969482422,1070766,NKE
+2022-12-27 11:30:00,117.80999755859375,118.19830322265625,117.66999816894531,118.02999877929688,118.02999877929688,654152,NKE
+2022-12-27 12:30:00,118.04499816894531,118.19000244140625,117.66999816894531,117.70999908447266,117.70999908447266,456846,NKE
+2022-12-27 13:30:00,117.7300033569336,117.7300033569336,117.29000091552734,117.3499984741211,117.3499984741211,600327,NKE
+2022-12-27 14:30:00,117.35590362548828,117.58000183105469,117.19499969482422,117.55999755859375,117.55999755859375,1042972,NKE
+2022-12-27 15:30:00,117.55999755859375,117.70999908447266,117.4000015258789,117.55999755859375,117.55999755859375,986334,NKE
+2022-12-28 09:30:00,117.58000183105469,118.23999786376953,116.48999786376953,116.5999984741211,116.5999984741211,1342269,NKE
+2022-12-28 10:30:00,116.5999984741211,116.80000305175781,116.08999633789062,116.2699966430664,116.2699966430664,720219,NKE
+2022-12-28 11:30:00,116.28500366210938,116.36000061035156,115.33000183105469,115.5999984741211,115.5999984741211,599413,NKE
+2022-12-28 12:30:00,115.61000061035156,116.32589721679688,115.5999984741211,116.26000213623047,116.26000213623047,275603,NKE'''
+        tester = ML_stock(ticker)
+        with patch("builtins.open", mock_open(read_data= a)) as mock_file:
+            tester.getLastDate("path/to/open",ticker)
+            tester.getDiffDay()
+            tester.update('path/to/open',ticker)
+            result = tester.getDiffDay()
+            assert result == 1
 
 class ML_stock:
     def __init__(self,Company):
@@ -60,7 +80,7 @@ class ML_stock:
         self.LastDate = self.last[0].split()[0].split('-')
         return self.LastDate
 
-    def getDiffDay(self,ticker):
+    def getDiffDay(self):
         x = datetime.datetime.now()
         DayMo365 = {'1':31,'2':28,'3':31,'4':30,'5':31,'6':30,'7':31,'8':31,'9':30,'10':31,'11':30,'12':31}
         DiffMo = int(x.month) - int(self.LastDate[1])
@@ -87,7 +107,7 @@ class ML_stock:
             self.DiffDay = str(DiffDay) + 'd'
         return DiffDay
         
-    def update(self,ticker):
+    def update(self,name,ticker):
         data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
         count = 0
         for i in data.index.day:
@@ -100,7 +120,7 @@ class ML_stock:
         data['ticker'] = 'NKE'
         data = data.iloc[count:,:]
         data
-        data.to_csv('test.csv',mode='a',header=False)
+        data.to_csv(name,mode='a',header=False)
 
     def plot(self):
         data = yf.download(tickers=self.Company, period='1d', interval='1m')
@@ -131,9 +151,10 @@ class ML_stock:
         fig.show()
 
     
-if __name__ == '__main__':
-    unittest.main()
-# ticker = 'NKE'
-# a = ML_stock(ticker)
-# print(a.getDiffDay(ticker))
-# a.update(ticker)
+# if __name__ == '__main__':
+#     unittest.main()
+ticker = 'NKE'
+a = ML_stock(ticker)
+a.getLastDate('test.csv',ticker)
+print(a.getDiffDay())
+a.update('test.csv',ticker)
