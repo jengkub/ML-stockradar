@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from datetime import timedelta, datetime
 import yfinance as yf
 import plotly.graph_objs as go
-import csv
 import unittest
+import csv
+import datetime
 
 class StockTestcase(unittest.TestCase):
     # def testSave(self):
@@ -18,6 +18,8 @@ class StockTestcase(unittest.TestCase):
 
 class ML_stock:
     def __init__(self,Company):
+        self.LastDate = []
+        self.DiffDay = 0
         self.Company = Company
     
     def saveData(self,Date):
@@ -32,6 +34,53 @@ class ML_stock:
     def info(self):
         data = yf.Ticker(self.Company)
         return data.info
+
+    def getDiffDay(self,ticker):
+        with open("test.csv",'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[7] == ticker:
+                    last = row
+        x = datetime.datetime.now()
+        DayMo365 = {'1':31,'2':28,'3':31,'4':30,'5':31,'6':30,'7':31,'8':31,'9':30,'10':31,'11':30,'12':31}
+        self.LastDate = last[0].split()[0].split('-')
+        DiffMo = int(x.month) - int(self.LastDate[1])
+        DiffYe = int(x.year) - int(self.LastDate[0])
+        if DiffYe == 0:
+            if DiffMo == 0:
+                DiffDay = int(x.day) - int(self.LastDate[2])
+                if DiffDay != 0:
+                    self.DiffDay = str(DiffDay) + 'd'
+            elif DiffMo != 0 :
+                for u in range(DiffMo):
+                    DayM = DayM + DayMo365[str(int(self.LastDate[1])+count)]
+                    count += 1
+                DiffDay = DayM - int(self.LastDate[2]) + int(x.day)
+                self.DiffDay = str(DiffDay) + 'd'
+        elif DiffYe != 0:
+            dayly = 0
+            dayn = 0
+            for j in range(1,int(self.LastDate[1])):
+                dayly = dayly + DayMo365[str(j)]
+            for i in range(1,int(x.month)):
+                dayn = dayn + DayMo365[str(i)]
+            DiffDay = (365*DiffYe) - dayly + dayn - int(self.LastDate[2]) + int(x.day)
+            self.DiffDay = str(DiffDay) + 'd'
+        return DiffDay
+        
+    def update(self,ticker):
+        data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
+        for i in data.index.day:
+            if data.index.year[count] == int(self.LastDate[0]):
+                if data.index.month[count] == int(self.LastDate[1]):
+                    if i == int(self.LastDate[2])+1:
+                        break
+            count += 1
+
+        data['ticker'] = 'NKE'
+        data = data.iloc[count:,:]
+        data
+        data.to_csv('test.csv',mode='a',header=False)
 
     def plot(self):
         data = yf.download(tickers=self.Company, period='1d', interval='1m')
@@ -62,5 +111,8 @@ class ML_stock:
         fig.show()
 
     
-if __name__ == '__main__':
-    unittest.main()
+# if __name__ == '__main__':
+#     unittest.main()
+
+a = ML_stock('NKE')
+print(a.getDiffDay('NKE'))
