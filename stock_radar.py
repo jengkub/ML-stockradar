@@ -71,17 +71,17 @@ class ML_stock:
         data = yf.Ticker(self.Company)
         return data.info
 
-    def getLastDate(self,ticker):
+    def getLastDate(self):
         conn = sqlite3.connect("test.sqlite")
         cur = conn.cursor()
-        ticker = 'AOT.BK'
-        query = "select * from stock_table where `ticker` == '%s'" % ticker
+        query = "select * from stock_table where `ticker` == '%s'" % self.Company
         self.r_df = pd.read_sql(query,conn)
         self.Ind = self.r_df.tail(1).industryGroup.to_string().split()[1]
         self.sec = self.r_df.tail(1).sector.to_string().split()[1]
         last = self.r_df.tail(1).Datetime.to_string().split()
         self.LastDate = last[1].split()[0].split('-')
         cur.close()
+        print(self.LastDate)
 
     def getDiffDay(self):
         x = datetime.datetime.now()
@@ -108,8 +108,8 @@ class ML_stock:
             for i in range(1,int(x.month)):
                 dayn = dayn + DayMo365[str(i)]
             DiffDay = (365*DiffYe) - dayly + dayn - int(self.LastDate[2]) + int(x.day)
-            
         self.DiffDay = str(DiffDay) + 'd'
+        return self.DiffDay
         
     def update(self,ticker):
         down = 0
@@ -178,6 +178,6 @@ class ML_stock:
 #     unittest.main()
 ticker = 'AOT.BK'
 a = ML_stock(ticker)
-a.getLastDate(ticker)
+a.getLastDate()
 print(a.getDiffDay())
 # a.update(ticker)
