@@ -37,7 +37,7 @@ class ML_stock:
         print(r_df)
 
     def getLastDate(self):
-        conn = sqlite3.connect("test.sqlite")
+        conn = sqlite3.connect("tutorial.db")
         cur = conn.cursor()
         query = "select * from stock_table where `ticker` == '%s'" % self.Company
         self.r_df = pd.read_sql(query,conn)
@@ -47,6 +47,7 @@ class ML_stock:
         self.LastDate = last[1].split()[0].split('-')
         cur.close()
         print(self.LastDate)
+        return self.LastDate
 
     def getDiffDay(self):
         x = datetime.datetime.now()
@@ -108,8 +109,8 @@ class ML_stock:
         data['industryGroup'] = self.Ind
         data['sector'] = self.sec
         data = data.iloc[count:,:]
-        print(data)
-        # data.to_sql('stock_table',con=conn,if_exists='append',index=True)
+        data.to_sql('stock_table',con=conn,if_exists='append',index=True)
+        return data
 
     def plot(self):
         data = yf.download(tickers=self.Company, period='1d', interval='1m')
