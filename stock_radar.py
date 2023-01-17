@@ -24,7 +24,7 @@ class TestMLStock(unittest.TestCase):
         mock_read_sql.return_value = df
 
         # Call the method being tested
-        result = self.stock.getLastDate('test.db')
+        result = self.stock.getLastDate()
 
         # Make assertions about the result
         self.assertEqual(result, ['2022', '01', '01'])
@@ -86,7 +86,7 @@ class TestMLStock(unittest.TestCase):
         mock_data.to_sql = MagicMock()
 
         # Call the method being tested
-        result = self.stock.update('ABC', mock_conn)
+        result = self.stock.update('ABC', 'Hour')
         mock_data.to_sql('stock_table', con=mock_conn, if_exists='append', index=True)
         # Make assertions about the result
         assert_frame_equal(result, mock_data)
@@ -140,8 +140,8 @@ class ML_stock:
         self.DiffDay = 0
         self.Company = Company
 
-    def getLastDate(self, nameDB):
-        conn = sqlite3.connect(nameDB)
+    def getLastDate(self):
+        conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
         query = "SELECT * FROM stock_table WHERE `ticker` = '%s'" % self.Company
         self.r_df = pd.read_sql(query, conn)
@@ -179,11 +179,16 @@ class ML_stock:
         return self.DiffDay
         
         
-    def update(self,ticker,nameDB):
+    def update(self,ticker,period):
         down = 0
         count = 0
-        conn = sqlite3.connect(nameDB)
-        data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
+        conn = sqlite3.connect("stock.sqlite")
+        if period == 'Hour':
+            data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
+        elif period == 'Day':
+            data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d')
+        elif period == 'Mount':
+            data = yf.download(tickers=ticker, period=self.DiffDay, interval='1mo')
         for i in data.index.day:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
