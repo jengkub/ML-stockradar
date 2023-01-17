@@ -94,6 +94,44 @@ class TestMLStock(unittest.TestCase):
         mock_download.assert_called_once_with(tickers='ABC', period=self.stock.DiffDay, interval='1h')
         mock_data.to_sql.assert_called_once_with('stock_table', con=mock_conn, if_exists='append', index=True)
 
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_getAllticker(self,mock_read_sql,mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Ticker': ['ABC','KKK'], 'Datetime': ['2022-01-01 10:00:00','2022-01-01 10:00:00'], 'industryGroup': ['industry','industry'], 'sector': ['sector','sector']},)
+        mock_read_sql.return_value = df
+        
+        # Call the method being tested
+        result = self.stock.getAllticker('Test')
+
+        # Make assertions about the result
+        self.assertEqual(result,['ABC','KKK'])
+
+    @patch('yfinance.download')
+    @patch('sqlite3.connect')
+    def test_download(self,mock_connect,mock_download):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'ticker': ['ABC']}, index=[datetime.datetime(2022, 1, 1)])
+        mock_download.return_value = df
+        # Set up the mock DataFrame returned by the download method
+        mock_data = df
+        # Call the method being tested
+        result = self.stock.download_ticker('Hour','DELTA.BK')
+
+        # Make assertions about the result
+        assert_frame_equal(result,mock_data)
 
 class ML_stock:
     def __init__(self,Company):
@@ -110,7 +148,6 @@ class ML_stock:
         last = self.r_df.tail(1).Datetime.to_string().split()
         self.LastDate = last[1].split()[0].split('-')
         cur.close()
-        print(self.LastDate)
         return self.LastDate
 
     def getDiffDay(self):
@@ -147,7 +184,6 @@ class ML_stock:
         count = 0
         conn = sqlite3.connect(nameDB)
         data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
-        print(self.DiffDay)
         for i in data.index.day:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
@@ -174,6 +210,38 @@ class ML_stock:
         data = data.iloc[count:,:]
         data.to_sql('stock_table',con=conn,if_exists='append',index=True)
         return data
+
+    def getAllticker(self,period):
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        if period == 'Hour':
+            query = "select distinct Ticker from stock_table_hr"
+        elif period == 'Day':
+            query = "select distinct Ticker from stock_table_d"
+        elif period == 'Mount':
+            query = "select distinct Ticker from stock_table_mo"
+        else:
+            query = ""
+        r_df = pd.read_sql(query,conn)
+        self.list_db = r_df['Ticker'].values.tolist()
+        return self.list_db
+
+    def download_ticker(self,period,ticker):
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        try:
+            if period == 'Hour':
+                data = yf.download(tickers=ticker, period='2y', interval='1h')
+            elif period == 'Day':
+                data = yf.download(tickers=ticker, period='max', interval='1d')
+            elif period == 'Mount':
+                data = yf.download(tickers=ticker, period='max', interval='1mo')
+            else:
+                data = None
+            data.to_sql('stock_table',con=conn,if_exists='append',index=True)
+            return data
+        except:
+            return False
 
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
