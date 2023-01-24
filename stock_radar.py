@@ -143,20 +143,24 @@ class ML_stock:
     def getLastDate(self):
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
+        # Query last element of stock in database
         query = "SELECT * FROM stock_table WHERE `ticker` = '%s'" % self.Company
         self.r_df = pd.read_sql(query, conn)
+        # Cut data to get only datatime
         last = self.r_df.tail(1).Datetime.to_string().split()
         self.LastDate = last[1].split()[0].split('-')
         cur.close()
         return self.LastDate
 
     def getDiffDay(self):
+        # Get datetime for now
         x = datetime.datetime.now()
         count = 0
         DayM = 0
         DayMo365 = {'1':31,'2':28,'3':31,'4':30,'5':31,'6':30,'7':31,'8':31,'9':30,'10':31,'11':30,'12':31}
         DiffMo = int(x.month) - int(self.LastDate[1])
         DiffYe = int(x.year) - int(self.LastDate[0])
+        # Get differend day for dowload stock
         if DiffYe == 0:
             if DiffMo == 0:
                 DiffDay = int(x.day) - int(self.LastDate[2])
@@ -183,19 +187,20 @@ class ML_stock:
         down = 0
         count = 0
         conn = sqlite3.connect("stock.sqlite")
+        # Select period to download
         if period == 'Hour':
             data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
         elif period == 'Day':
             data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d')
         elif period == 'Mount':
             data = yf.download(tickers=ticker, period=self.DiffDay, interval='1mo')
+        # Get number of extra stock
         for i in data.index.day:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
                     if i == int(self.LastDate[2])+1:
                         break
             count += 1
-
         ok = self.r_df.tail(1).Datetime.to_string().split()[2]
         if ok == '10:00:00':
             down = 5
@@ -209,11 +214,18 @@ class ML_stock:
             down = 1
         elif ok == '16:00:00':
             down = 0
-
+        # Cut extra stock off
         count = count - down
         data['ticker'] = ticker
         data = data.iloc[count:,:]
-        data.to_sql('stock_table',con=conn,if_exists='append',index=True)
+        # Save to sqlite
+        # Select period to download
+        if period == 'Hour':
+            data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
+        elif period == 'Day':
+            data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
+        elif period == 'Mount':
+            data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
         return data
 
     def getAllticker(self,period):
@@ -235,6 +247,7 @@ class ML_stock:
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
         try:
+            # Select period to download
             if period == 'Hour':
                 data = yf.download(tickers=ticker, period='2y', interval='1h')
             elif period == 'Day':
@@ -243,7 +256,9 @@ class ML_stock:
                 data = yf.download(tickers=ticker, period='max', interval='1mo')
             else:
                 data = None
+            # Save to sqlite3
             data.to_sql('stock_table',con=conn,if_exists='append',index=True)
+            # return data to ploting graph
             return data
         except:
             return False
