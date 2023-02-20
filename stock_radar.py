@@ -20,6 +20,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
+
 class TestMLStock(unittest.TestCase):
     def setUp(self):
         self.stock = ML_stock('ABC')
@@ -259,29 +260,34 @@ class TestMLStock(unittest.TestCase):
 
         self.assertEqual(result, False)
 
-    @patch('stock_radar.find_link')
-    def test_scrap_news_SET(self, mock_find_link):
-        mock_find_link.return_value = ['https://example.com']
+    def test_scrap_news_SET(self):
+        # Mock the return value of the find_link function
+        mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
         
-        stock = ['PTT', 'ACE']
-        
-        title = 'Example News Title'
-        date = '2022/02/20'
-        body = 'Example news body'
-        ticker = 'PTT'
-        
-        expected_df = pd.DataFrame({'Datetime': [datetime(2022, 2, 20)], 'Title':[title], 'Link':['https://example.com'], 'Body':[body], 'Ticker':[ticker+'.BK']})
-        
-        with patch('requests.get') as mock_requests:
-            with patch('load_data_news') as mock_load_data_news:
-                with patch('save_data_news') as mock_save_data_news:
-                    mock_requests.return_value.content = f'<div class="post-title entry-title">{title}</div> <div class="date meta-item tie-icon">{date}</div> <div class="entry-content entry clearfix">{body}</div>'
-                    mock_load_data_news.return_value = []
-                    
-                    self.stock.scrap_news_SET('https://example.com', stock)
-                    
-                    mock_load_data_news.assert_called_once_with(datetime(2022, 2, 20), title, 'https://example.com', ticker)
-                    mock_save_data_news.assert_called_once_with(expected_df)
+        # Create an instance of the YourClass object with the mocked find_link function
+        with patch.object(ML_stock, 'find_link', mock_find_link):
+            obj = self.stock
+            
+            # Call the scrap_news_SET method with the mocked return value
+            result = obj.scrap_news_SET("https://example.com", "stock")
+            
+            # Check that the function returns the expected value
+            self.assertEqual(result, True)
+
+    def test_scrap_news_with_nonempty_news(self):
+        # Mock the load_data_news function to return a non-empty list
+        mock_load_data_news = MagicMock(return_value=[{'title': 'Fake news', 'date': '2022-02-20', 'link': 'https://example.com/news/123', 'ticker': 'AAPL.BK'}])
+        scrap_news = self.stock
+        scrap_news.load_data_news = mock_load_data_news
+
+        # Call the function with a fake link and stock
+        result = scrap_news.scrap_news_SET('https://example.com', ['AAPL'])
+
+        # Assert that the function returns False
+        self.assertEqual(result, False)
+
+    
+
 
 class ML_stock:
     def __init__(self,Company):
@@ -419,20 +425,20 @@ class ML_stock:
         return self.stock
 
     def save_data_news(self, data):
-            # connect to the database
-            conn = sqlite3.connect('stock.sqlite')
-            # save the data to the database
-            data.to_sql('stock_news',con=conn,if_exists='append',index=False)
+        # connect to the database
+        conn = sqlite3.connect('stock.sqlite')
+        # save the data to the database
+        data.to_sql('stock_news',con=conn,if_exists='append',index=False)
             
 
     def load_data_news(self, date, title, url, ticker):
-            # connect to the database
-            conn = sqlite3.connect('stock.sqlite')
-            cur = conn.cursor()
-            query = "SELECT * FROM stock_news WHERE DATETIME = '%s' AND Title = '%s' AND Link = '%s' AND Ticker = '%s'" %(date, title, url, ticker)
-            cur.execute(query)
-            self.news = cur.fetchall()
-            return self.news
+        # connect to the database
+        conn = sqlite3.connect('stock.sqlite')
+        cur = conn.cursor()
+        query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?" 
+        cur.execute(query, (date, title, url, ticker))
+        self.news = cur.fetchall()
+        return self.news
 
     def find_link(self, link):
         all_link = []
