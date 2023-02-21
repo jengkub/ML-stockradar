@@ -332,20 +332,22 @@ class TestMLStock(unittest.TestCase):
         mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
 
         # Create an instance of the Class object with the mocked find_link function
-        with patch.object(ML_stock, 'find_link', mock_find_link):
-            obj = self.stock
+        obj = self.stock
+        with patch.object(obj, 'find_link', mock_find_link):
+            # Mock the return value of the load_data_news function
+            mock_load_data_news = MagicMock(return_value=[['2022-01-01', 'ABC', 'URL', 'Ticker']])
 
-            # Call the scrap_news_SET method with the mocked return value
-            obj.news = ['2022-01-01', 'ABC', 'URL', 'Ticker']
+            # Create an instance of the Class object with the mocked load_data_news function
+            with patch.object(obj, 'load_data_news', mock_load_data_news):
+                # Call the scrap_news_SET method with the mocked return value
+                obj.news = [('2022-01-01', 'ABC', 'URL', 'Ticker')]
+                result = obj.scrap_news_SET("https://example.com", ['ABC'])
 
-            # Call the scrap_news_SET method with the mocked return value
-            result = obj.scrap_news_SET("https://example.com", ['ABC'])
+                # Check that the function returns the expected value
+                self.assertEqual(result, True)
 
-            # Check that the function returns the expected value
-            self.assertEqual(result, True)
-
-            # Check that self.news is not an empty list when self.load_data_news is called
-            self.assertNotEqual(obj.news, [])
+                # Check that self.news is not an empty list when self.load_data_news is called
+                self.assertNotEqual(obj.news, [])
 
 
     def test_next_page_scrap_success(self):
@@ -363,14 +365,31 @@ class TestMLStock(unittest.TestCase):
         # assert that the method returned True
         self.assertEqual(result, 'Stop')
 
-    def test_news_set100(self):
-        # Call the method being tested
-        result = self.stock.News_SET100()
+    def test_News_SET100(self):
+        # Mock the return value of the find_link function
+        mock_next_page_scrap = MagicMock(return_value='Stop')
 
-        # Assert that the method returns True
+        # Create an instance of the Class object with the mocked find_link function
+        with patch.object(ML_stock, 'next_page_scrap', mock_next_page_scrap):
+
+            # Call the scrap_news_SET method with the mocked return value
+            result = self.stock.News_SET100()
+
+            # Check that the function returns the expected value
+            self.assertTrue(result)
+
+
+    def test_news_Nasdaq(self):
+        # Call the method to test here, e.g.
+        result = self.stock.news_Nasdaq(0)
+        # Check the output
         self.assertTrue(result)
 
-
+    def test_news_Crypto(self):
+        # Call the method to test here, e.g.
+        result = self.stock.news_Crypto(0)
+        # Check the output
+        self.assertTrue(result)
 
 class ML_stock:
     def __init__(self,Company):
@@ -496,7 +515,8 @@ class ML_stock:
             return data
         except:
             return False
-        
+
+    #return all stock in SET100    
     def list_set(self):
         self.stock = []
         conn = sqlite3.connect("stock.sqlite")
@@ -509,6 +529,7 @@ class ML_stock:
             self.stock.append(temp[0])
         return self.stock
     
+    #return all stock in NASDAQ100 
     def list_nasdaq(self):
         self.stock = []
         conn = sqlite3.connect("stock.sqlite")
@@ -518,6 +539,7 @@ class ML_stock:
         self.stock = list(stock['Ticker'])
         return self.stock
     
+    #return all Crypto100 
     def list_crypto(self):
         self.stock = []
         conn = sqlite3.connect("stock.sqlite")
@@ -530,13 +552,14 @@ class ML_stock:
             self.stock.append(temp[0])
         return self.stock
 
+    #save news into database
     def save_data_news(self, data):
         # connect to the database
         conn = sqlite3.connect('stock.sqlite')
         # save the data to the database
         data.to_sql('stock_news',con=conn,if_exists='append',index=False)
             
-
+    #load news from database 
     def load_data_news(self, date, title, url, ticker):
         # connect to the database
         conn = sqlite3.connect('stock.sqlite')
@@ -546,6 +569,7 @@ class ML_stock:
         self.news = cur.fetchall()
         return self.news
 
+    #find all link news in website
     def find_link(self, link):
         all_link = []
         response = requests.get(link)
@@ -560,6 +584,7 @@ class ML_stock:
             all_link.append(href)
         return all_link
 
+    #scrap news from website
     def scrap_news_SET(self, link ,stock):
         all_link = self.find_link(link)
 
@@ -599,7 +624,8 @@ class ML_stock:
             except:
                 pass
         return True 
-
+    
+    #find next page
     def next_page_scrap(self, stock):
         try:
             num = 1
@@ -612,7 +638,7 @@ class ML_stock:
         except:
             return 'Error'
         
-            
+    #main scraping function        
     def News_SET100(self):
         self.stock = self.list_set()
         work = True
@@ -625,6 +651,95 @@ class ML_stock:
             except Exception as e: 
                 print(e)
         return True
+    
+    #scrap news from API
+    def news_Nasdaq(self,interger):
+        con = sqlite3.connect("stock.sqlite")
+        cur = con.cursor()
+        try:
+            for i in self.stock[interger:]:
+                ind = self.stock.index(i)
+                url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers='+ i +'&limit=200&apikey=8X8QE27D001F3TV'
+                r = requests.get(url)
+                data = r.json()
+                round = int(data['items'])
+                for j in range(round):
+                    print(j)
+                    title = data['feed'][j]['title']
+                    date = data['feed'][j]['time_published']
+                    get_url = data['feed'][j]['url']
+                    body = data['feed'][j]['summary']
+
+                    date = date.split("T")
+                    date = date[0]
+                    year = date[:4]
+                    mo = date[4:6]
+                    day = date[6:]
+
+                    date = [year,mo,day]
+                    date = "-".join(date)
+                    date_format = "%Y-%m-%d"
+                    date_obj = datetime.strptime(date, date_format)
+
+                    query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?"
+                    cur.execute(query, (date_obj, title, get_url, i))
+                    news = cur.fetchall()
+                    print(news)
+                    if news != []:
+                        break
+                    else:
+                        df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title], 'Link':[get_url], 'Body':[body], 'Ticker':[i]})
+                        print(df)
+                        self.save_data_news(df)
+            return True
+        except: 
+            self.news_Nasdaq(ind)
+
+    #scrap news from API
+    def news_Crypto(self, interger):
+        con = sqlite3.connect("stock.sqlite")
+        cur = con.cursor()
+        try:
+            for i in self.stock[interger:]:
+                print(i)
+                ind = self.stock.index(i)
+                cryp = i.split('-')
+                cryp = cryp[0]
+                # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
+                url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&blockchain='+ cryp +'&limit=200&apikey=8X8QE27D001F3TV'
+                r = requests.get(url)
+                data = r.json()
+                round = int(data['items'])
+                for j in range(round):
+                    print(j)
+                    title = data['feed'][j]['title']
+                    date = data['feed'][j]['time_published']
+                    get_url = data['feed'][j]['url']
+                    body = data['feed'][j]['summary']
+                    date = date.split("T")
+                    date = date[0]
+                    year = date[:4]
+                    mo = date[4:6]
+                    day = date[6:]
+                    date = [year,mo,day]
+                    date = "-".join(date)
+                    date_format = "%Y-%m-%d"
+                    date_obj = datetime.strptime(date, date_format)
+
+                    query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?"
+                    cur.execute(query, (date_obj, title, get_url, i))
+                    news = cur.fetchall()
+                    print(news)
+                    if news != []:
+                        break
+                    else:
+                        df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title], 'Link':[get_url], 'Body':[body], 'Ticker':[i]})
+                        print(df)
+                        self.save_data_news(df)
+            return True
+        except : 
+            self.news_Crypto(ind)
+            
 
     
 if __name__ == '__main__':
