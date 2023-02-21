@@ -146,7 +146,7 @@ class TestMLStock(unittest.TestCase):
 
 
     @patch('pandas.read_sql')
-    def test_list_set(self, mock_read_sql):
+    def test_list_set_SET(self, mock_read_sql):
         # Set up the mock cursor
         # Set up the mock DataFrame
         df = pd.DataFrame({'Ticker': ['AAV', 'ACE', 'ADVANC', 'AMATA', 'AOT', 'AP', 'AWC', 'BAM', 'BANPU', 'BBL', 'BCH', 'BCP', 'BCPG', 
@@ -165,14 +165,60 @@ class TestMLStock(unittest.TestCase):
         
         # Make assertions about the result
         self.assertEqual(result,['AAV', 'ACE', 'ADVANC', 'AMATA', 'AOT', 'AP', 'AWC', 'BAM', 'BANPU', 'BBL', 'BCH', 'BCP', 'BCPG', 
-                                             'BDMS', 'BEC', 'BEM', 'BGRIM', 'BH', 'BLA', 'BTS', 'BYD', 'CBG', 'CENTEL', 'CHG', 'CK', 'CKP', 'COM7', 
-                                             'CPALL', 'CPF', 'CPN', 'CRC', 'DELTA', 'DOHOME', 'DTAC', 'EA', 'EGCO', 'EPG', 'ESSO', 'FORTH', 'GLOBAL', 
-                                             'GPSC', 'GULF', 'GUNKUL', 'HANA', 'HMPRO', 'INTUCH', 'IRPC', 'IVL', 'JAS', 'JMART', 'JMT', 'KBANK', 'KCE', 
-                                             'KEX', 'KKP', 'KTB', 'KTC', 'LH', 'MEGA', 'MINT', 'MTC', 'NEX', 'ONEE', 'OR', 'ORI', 'OSP', 'PLANB', 'PSL', 
-                                             'PTG', 'PTT', 'PTTEP', 'PTTGC', 'QH', 'RATCH', 'RBF', 'RCL', 'SABUY', 'SAWAD', 'SCB', 'SCC', 'SCGP', 'SINGER', 
-                                             'SPALI', 'SPRC', 'STA', 'STARK', 'STGT', 'TCAP', 'THANI', 'THG', 'TIDLOR', 'TIPH', 'TISCO', 'TOP', 'TQM', 'TRUE', 
-                                             'TTB', 'TU', 'VGI', 'WHA'])
+                                    'BDMS', 'BEC', 'BEM', 'BGRIM', 'BH', 'BLA', 'BTS', 'BYD', 'CBG', 'CENTEL', 'CHG', 'CK', 'CKP', 'COM7', 
+                                    'CPALL', 'CPF', 'CPN', 'CRC', 'DELTA', 'DOHOME', 'DTAC', 'EA', 'EGCO', 'EPG', 'ESSO', 'FORTH', 'GLOBAL', 
+                                    'GPSC', 'GULF', 'GUNKUL', 'HANA', 'HMPRO', 'INTUCH', 'IRPC', 'IVL', 'JAS', 'JMART', 'JMT', 'KBANK', 'KCE', 
+                                    'KEX', 'KKP', 'KTB', 'KTC', 'LH', 'MEGA', 'MINT', 'MTC', 'NEX', 'ONEE', 'OR', 'ORI', 'OSP', 'PLANB', 'PSL', 
+                                    'PTG', 'PTT', 'PTTEP', 'PTTGC', 'QH', 'RATCH', 'RBF', 'RCL', 'SABUY', 'SAWAD', 'SCB', 'SCC', 'SCGP', 'SINGER', 
+                                    'SPALI', 'SPRC', 'STA', 'STARK', 'STGT', 'TCAP', 'THANI', 'THG', 'TIDLOR', 'TIPH', 'TISCO', 'TOP', 'TQM', 'TRUE', 
+                                    'TTB', 'TU', 'VGI', 'WHA'])
+        
+    @patch('pandas.read_sql')
+    def test_list_set_NASDAQ(self, mock_read_sql):
+        # Set up the mock cursor
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Ticker': ['ABNB', 'ADBE', 'ADI', 'ADSK', 'AEP', 'ALGN', 'AMAT', 'AMGN', 'ANSS', 'ATVI', 'AVGO', 'AZN', 'BIIB', 'BKNG', 'BKR', 
+                                        'CEG', 'CHTR', 'COST', 'CPRT', 'CRWD', 'CSCO', 'CSGP', 'CSX', 'CTAS', 'CTSH', 'DLTR', 'DXCM', 'EA', 'EBAY', 'ENPH', 
+                                        'EXC', 'FANG', 'FAST', 'FISV', 'FTNT', 'GOOG', 'GOOGL', 'HON', 'IDXX', 'ILMN', 'ISRG', 'JD', 'KHC', 'KLAC', 'LCID', 
+                                        'LRCX', 'LULU', 'MAR', 'MCHP', 'MDLZ', 'MELI', 'MNST', 'MSFT', 'MU', 'ODFL', 'ORLY', 'PANW', 'PAYX', 'PCAR', 'PDD', 
+                                        'PEP', 'QCOM', 'REGN', 'RIVN', 'ROST', 'SBUX', 'SGEN', 'SIRI', 'SNPS', 'TMUS', 'VRSK', 'VRTX', 'WDAY', 'XEL', 'ZM', 'ZS']})
+        mock_read_sql.return_value = df
 
+        
+        # Call the method being tested
+        result = self.stock.list_nasdaq()
+        
+        # Make assertions about the result
+        self.assertEqual(result,['ABNB', 'ADBE', 'ADI', 'ADSK', 'AEP', 'ALGN', 'AMAT', 'AMGN', 'ANSS', 'ATVI', 'AVGO', 'AZN', 'BIIB', 'BKNG', 'BKR', 
+                                'CEG', 'CHTR', 'COST', 'CPRT', 'CRWD', 'CSCO', 'CSGP', 'CSX', 'CTAS', 'CTSH', 'DLTR', 'DXCM', 'EA', 'EBAY', 'ENPH', 
+                                'EXC', 'FANG', 'FAST', 'FISV', 'FTNT', 'GOOG', 'GOOGL', 'HON', 'IDXX', 'ILMN', 'ISRG', 'JD', 'KHC', 'KLAC', 'LCID', 
+                                'LRCX', 'LULU', 'MAR', 'MCHP', 'MDLZ', 'MELI', 'MNST', 'MSFT', 'MU', 'ODFL', 'ORLY', 'PANW', 'PAYX', 'PCAR', 'PDD', 
+                                'PEP', 'QCOM', 'REGN', 'RIVN', 'ROST', 'SBUX', 'SGEN', 'SIRI', 'SNPS', 'TMUS', 'VRSK', 'VRTX', 'WDAY', 'XEL', 'ZM', 'ZS'])
+
+    @patch('pandas.read_sql')
+    def test_list_set_CRYPTO(self, mock_read_sql):
+        # Set up the mock cursor
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Ticker': ['BTC', 'ETH', 'USDT', 'BNB', 'USDC', 'XRP', 'BUSD', 'ADA', 'DOGE', 'MATIC', 'HEX', 'SOL', 'DOT', 'SHIB', 'LTC', 'WTRX', 'TRX', 
+                                      'AVAX', 'STETH', 'DAI', 'UNI7083', 'WBTC', 'ATOM', 'LINK', 'LEO', 'ETC', 'XMR', 'TON11419', 'OKB', 'BCH', 'APT21794', 'LDO', 
+                                      'HBAR', 'XLM', 'FIL', 'NEAR', 'APE18876', 'CRO', 'ALGO', 'VET', 'QNT', 'ICP', 'GRT6719', 'FTM', 'MANA', 'TMG', 'BTCB', 'BIT11221', 
+                                      'AAVE', 'EOS', 'WBNB', 'AXS', 'EGLD', 'FLOW', 'THETA', 'SAND', 'FRAX', 'LUNC', 'XTZ', 'TUSD', 'IMX10603', 'CHZ', 'MINA', 'HBTC', 
+                                      'USDP', 'RPL', 'HT', 'KCS', 'CRV', 'BSV', 'FXS', 'DASH', 'ZEC', 'MKR', 'USDD', 'BTTOLD', 'BTT', 'CAKE', 'XEC', 'MIOTA', 'TNC5524', 
+                                      'GMX11857', 'SNX', 'KLAY', 'BGB', 'NEO', 'TWT', 'GUSD', 'OP', 'RUNE', 'LRC', 'FTT', 'AGIX', 'PAXG', 'OSMO', 'XRD', 'BABYDOGE', 'GT', 'ZIL', 'CVX']})
+        mock_read_sql.return_value = df
+
+        
+        # Call the method being tested
+        result = self.stock.list_crypto()
+        
+        # Make assertions about the result
+        self.assertEqual(result,['BTC', 'ETH', 'USDT', 'BNB', 'USDC', 'XRP', 'BUSD', 'ADA', 'DOGE', 'MATIC', 'HEX', 'SOL', 'DOT', 'SHIB', 'LTC', 'WTRX', 'TRX', 
+                                'AVAX', 'STETH', 'DAI', 'UNI7083', 'WBTC', 'ATOM', 'LINK', 'LEO', 'ETC', 'XMR', 'TON11419', 'OKB', 'BCH', 'APT21794', 'LDO', 
+                                'HBAR', 'XLM', 'FIL', 'NEAR', 'APE18876', 'CRO', 'ALGO', 'VET', 'QNT', 'ICP', 'GRT6719', 'FTM', 'MANA', 'TMG', 'BTCB', 'BIT11221', 
+                                'AAVE', 'EOS', 'WBNB', 'AXS', 'EGLD', 'FLOW', 'THETA', 'SAND', 'FRAX', 'LUNC', 'XTZ', 'TUSD', 'IMX10603', 'CHZ', 'MINA', 'HBTC', 
+                                'USDP', 'RPL', 'HT', 'KCS', 'CRV', 'BSV', 'FXS', 'DASH', 'ZEC', 'MKR', 'USDD', 'BTTOLD', 'BTT', 'CAKE', 'XEC', 'MIOTA', 'TNC5524', 
+                                'GMX11857', 'SNX', 'KLAY', 'BGB', 'NEO', 'TWT', 'GUSD', 'OP', 'RUNE', 'LRC', 'FTT', 'AGIX', 'PAXG', 'OSMO', 'XRD', 'BABYDOGE', 'GT', 'ZIL', 'CVX'])
+    
 
     @patch('sqlite3.connect')
     @patch('pandas.DataFrame.to_sql')   
@@ -260,33 +306,70 @@ class TestMLStock(unittest.TestCase):
 
         self.assertEqual(result, False)
 
-    def test_scrap_news_SET(self):
+    def test_scrap_news_SET_new_news(self):
         # Mock the return value of the find_link function
         mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
-        
-        # Create an instance of the YourClass object with the mocked find_link function
+
+        # Create an instance of the Class object with the mocked find_link function
         with patch.object(ML_stock, 'find_link', mock_find_link):
             obj = self.stock
-            
+
             # Call the scrap_news_SET method with the mocked return value
-            result = obj.scrap_news_SET("https://example.com", "stock")
-            
+            obj.news = []
+
+            # Call the scrap_news_SET method with the mocked return value
+            result = obj.scrap_news_SET("https://example.com", ['ABC'])
+
             # Check that the function returns the expected value
             self.assertEqual(result, True)
 
-    def test_scrap_news_with_nonempty_news(self):
-        # Mock the load_data_news function to return a non-empty list
-        mock_load_data_news = MagicMock(return_value=[{'title': 'Fake news', 'date': '2022-02-20', 'link': 'https://example.com/news/123', 'ticker': 'AAPL.BK'}])
-        scrap_news = self.stock
-        scrap_news.load_data_news = mock_load_data_news
+            # Check that self.news is not an empty list when self.load_data_news is called
+            self.assertEqual(obj.news, [])
 
-        # Call the function with a fake link and stock
-        result = scrap_news.scrap_news_SET('https://example.com', ['AAPL'])
 
-        # Assert that the function returns False
-        self.assertEqual(result, False)
+    def test_scrap_news_SET_old_news(self):
+        # Mock the return value of the find_link function
+        mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
 
-    
+        # Create an instance of the Class object with the mocked find_link function
+        with patch.object(ML_stock, 'find_link', mock_find_link):
+            obj = self.stock
+
+            # Call the scrap_news_SET method with the mocked return value
+            obj.news = ['2022-01-01', 'ABC', 'URL', 'Ticker']
+
+            # Call the scrap_news_SET method with the mocked return value
+            result = obj.scrap_news_SET("https://example.com", ['ABC'])
+
+            # Check that the function returns the expected value
+            self.assertEqual(result, True)
+
+            # Check that self.news is not an empty list when self.load_data_news is called
+            self.assertNotEqual(obj.news, [])
+
+
+    def test_next_page_scrap_success(self):
+        # simulate a case where scrap_news_SET returns True on the second iteration
+        def mock_scrap_news_SET(url, stock):
+            if url == 'https://www.kaohoon.com/latest-news/page/2':
+                return True
+            else:
+                return False
+        self.stock.scrap_news_SET = mock_scrap_news_SET
+
+        # call the method with a mock stock value
+        result = self.stock.next_page_scrap('mock_stock')
+
+        # assert that the method returned True
+        self.assertEqual(result, 'Stop')
+
+    def test_news_set100(self):
+        # Call the method being tested
+        result = self.stock.News_SET100()
+
+        # Assert that the method returns True
+        self.assertTrue(result)
+
 
 
 class ML_stock:
@@ -296,6 +379,7 @@ class ML_stock:
         self.DiffDay = 0
         self.Company = Company
         self.stock = []
+        self.news = []
 
     def getLastDate(self,period):
         conn = sqlite3.connect("stock.sqlite")
@@ -414,6 +498,7 @@ class ML_stock:
             return False
         
     def list_set(self):
+        self.stock = []
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
         query = "select Ticker from stock_info where `Index` == 'SET100'"
@@ -421,6 +506,27 @@ class ML_stock:
         stock = list(stock['Ticker'])
         for i in stock:
             temp = i.split('.')
+            self.stock.append(temp[0])
+        return self.stock
+    
+    def list_nasdaq(self):
+        self.stock = []
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        query = "select Ticker from stock_info where `Index` == 'NASDAQ100'"
+        stock = pd.read_sql(query,conn)
+        self.stock = list(stock['Ticker'])
+        return self.stock
+    
+    def list_crypto(self):
+        self.stock = []
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        query = "select Ticker from stock_info where `Index` == 'CRYPTO100'"
+        stock = pd.read_sql(query,conn)
+        stock = list(stock['Ticker'])
+        for i in stock:
+            temp = i.split('-')
             self.stock.append(temp[0])
         return self.stock
 
@@ -481,29 +587,31 @@ class ML_stock:
 
                 for ticker in tag:
                     if ticker.text in stock:
-                        news =  self.load_data_news(date_obj, title.text, get_url, ticker.text)
-                        print(news)
-                        if news != []:
+                        self.news =  self.load_data_news(date_obj, title.text, get_url, ticker.text)
+                        print(self.news)
+                        if self.news != []:
                                 return False
                         else:
                             ticker = ticker.text + '.BK'
                             df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title.text], 'Link':[get_url], 'Body':[body], 'Ticker':[ticker]})
                             print(df)
-                            self.save_data_news(df)              
+                            self.save_data_news(df)                
             except:
                 pass
-        return True
+        return True 
 
     def next_page_scrap(self, stock):
-        num = 1
-        case = True
-        while case == True:
-            num += 1
-            run = self.scrap_news_SET('https://www.kaohoon.com/latest-news/page/'+str(num), stock)
-            if run == False:
-                print('stop')
-                return 'Stop'
-        return True
+        try:
+            num = 1
+            case = True
+            while case == True:
+                num += 1
+                run = self.scrap_news_SET('https://www.kaohoon.com/latest-news/page/'+str(num), stock)
+                if run == False:
+                    return 'Stop'
+        except:
+            return 'Error'
+        
             
     def News_SET100(self):
         self.stock = self.list_set()
