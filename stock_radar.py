@@ -1,11 +1,11 @@
 import unittest
-from unittest.mock import patch,MagicMock
+from unittest.mock import patch,MagicMock , Mock
 import sqlite3
 import pandas as pd
 import datetime
 import yfinance as yf
 from pandas.testing import assert_frame_equal
-from jupyter_dash import JupyterDash
+# from jupyter_dash import JupyterDash
 from dash import Dash, html, dcc, Input, Output, callback , State, ctx, dash_table
 import dateutil.relativedelta
 from datetime import date
@@ -16,6 +16,10 @@ from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+import requests
+from bs4 import BeautifulSoup
+
+
 
 class TestMLStock(unittest.TestCase):
     def setUp(self):
@@ -140,12 +144,158 @@ class TestMLStock(unittest.TestCase):
         # Make assertions about the result
         assert_frame_equal(result,mock_data)
 
+
+    @patch('pandas.read_sql')
+    def test_list_set(self, mock_read_sql):
+        # Set up the mock cursor
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Ticker': ['AAV', 'ACE', 'ADVANC', 'AMATA', 'AOT', 'AP', 'AWC', 'BAM', 'BANPU', 'BBL', 'BCH', 'BCP', 'BCPG', 
+                                        'BDMS', 'BEC', 'BEM', 'BGRIM', 'BH', 'BLA', 'BTS', 'BYD', 'CBG', 'CENTEL', 'CHG', 'CK', 'CKP', 'COM7', 
+                                        'CPALL', 'CPF', 'CPN', 'CRC', 'DELTA', 'DOHOME', 'DTAC', 'EA', 'EGCO', 'EPG', 'ESSO', 'FORTH', 'GLOBAL', 
+                                        'GPSC', 'GULF', 'GUNKUL', 'HANA', 'HMPRO', 'INTUCH', 'IRPC', 'IVL', 'JAS', 'JMART', 'JMT', 'KBANK', 'KCE', 
+                                        'KEX', 'KKP', 'KTB', 'KTC', 'LH', 'MEGA', 'MINT', 'MTC', 'NEX', 'ONEE', 'OR', 'ORI', 'OSP', 'PLANB', 'PSL', 
+                                        'PTG', 'PTT', 'PTTEP', 'PTTGC', 'QH', 'RATCH', 'RBF', 'RCL', 'SABUY', 'SAWAD', 'SCB', 'SCC', 'SCGP', 'SINGER', 
+                                        'SPALI', 'SPRC', 'STA', 'STARK', 'STGT', 'TCAP', 'THANI', 'THG', 'TIDLOR', 'TIPH', 'TISCO', 'TOP', 'TQM', 'TRUE', 
+                                        'TTB', 'TU', 'VGI', 'WHA']})
+        mock_read_sql.return_value = df
+
+        
+        # Call the method being tested
+        result = self.stock.list_set()
+        
+        # Make assertions about the result
+        self.assertEqual(result,['AAV', 'ACE', 'ADVANC', 'AMATA', 'AOT', 'AP', 'AWC', 'BAM', 'BANPU', 'BBL', 'BCH', 'BCP', 'BCPG', 
+                                             'BDMS', 'BEC', 'BEM', 'BGRIM', 'BH', 'BLA', 'BTS', 'BYD', 'CBG', 'CENTEL', 'CHG', 'CK', 'CKP', 'COM7', 
+                                             'CPALL', 'CPF', 'CPN', 'CRC', 'DELTA', 'DOHOME', 'DTAC', 'EA', 'EGCO', 'EPG', 'ESSO', 'FORTH', 'GLOBAL', 
+                                             'GPSC', 'GULF', 'GUNKUL', 'HANA', 'HMPRO', 'INTUCH', 'IRPC', 'IVL', 'JAS', 'JMART', 'JMT', 'KBANK', 'KCE', 
+                                             'KEX', 'KKP', 'KTB', 'KTC', 'LH', 'MEGA', 'MINT', 'MTC', 'NEX', 'ONEE', 'OR', 'ORI', 'OSP', 'PLANB', 'PSL', 
+                                             'PTG', 'PTT', 'PTTEP', 'PTTGC', 'QH', 'RATCH', 'RBF', 'RCL', 'SABUY', 'SAWAD', 'SCB', 'SCC', 'SCGP', 'SINGER', 
+                                             'SPALI', 'SPRC', 'STA', 'STARK', 'STGT', 'TCAP', 'THANI', 'THG', 'TIDLOR', 'TIPH', 'TISCO', 'TOP', 'TQM', 'TRUE', 
+                                             'TTB', 'TU', 'VGI', 'WHA'])
+
+
+    @patch('sqlite3.connect')
+    @patch('pandas.DataFrame.to_sql')   
+    def test_save_data_news(self, mock_to_sql, mock_connect):
+        # Create a sample DataFrame with some test data
+        df = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
+
+        # Replace the real to_sql() method with the mock object
+        mock_to_sql.return_value = None
+
+        # Replace the real sqlite3.connect() method with the mock object
+        mock_conn = MagicMock()
+        mock_connect.return_value = mock_conn
+
+        # call the save_data_to_database function with some data
+        self.stock.save_data_news(df)
+
+        # Ensure that the connect() method was called with the correct database name
+        mock_connect.assert_called_once_with('stock.sqlite')
+
+        # Ensure that the to_sql() method was called with the correct table name and data
+        expected_table = 'stock_news'
+        expected_if_exists = 'append'
+        expected_index = False
+        mock_to_sql.assert_called_once_with(expected_table, con=mock_conn, if_exists=expected_if_exists, index=expected_index)
+
+    @patch('sqlite3.connect')
+    def test_load_data_news(self, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchall.return_value = ['2022-01-01', 'ABC', 'URL', 'Ticker']
+
+        # Call the method being tested
+        result = self.stock.load_data_news('2022-01-01', 'ABC', 'URL', 'Ticker')
+
+        self.assertEqual(result, mock_cursor.fetchall.return_value)
+
+    @patch('requests.get')
+    def test_find_link(self, mock_get):
+        # Define mock response object
+        mock_response = Mock()
+        mock_response.content = """
+            <html>
+            <body>
+            <div class="tie-col-md-11 tie-col-sm-10 tie-col-xs-10">
+            <a href="https://www.example.com/page1">Link 1</a>
+            </div>
+            <div class="tie-col-md-11 tie-col-sm-10 tie-col-xs-10">
+            <a href="https://www.example.com/page2">Link 2</a>
+            </div>
+            </body>
+            </html>
+        """
+
+        # Set up mock response from requests.get
+        mock_get.return_value = mock_response
+
+        # Call find_link function with mocked response
+        result = self.stock.find_link("https://www.example.com")
+
+        self.assertEqual(result, ["https://www.example.com/page1", "https://www.example.com/page2"])
+
+    @patch('requests.get')
+    def test_not_find_link(self, mock_get):
+        # Define mock response object
+        mock_response = Mock()
+        mock_response.content = """
+            <html>
+            <body>
+            <div class="tie-col-md-11 tie-col-sm-10">
+            </div>
+            <div class="tie-col-md-11 tie-col-sm-10">
+            </div>
+            </body>
+            </html>
+        """
+
+        # Set up mock response from requests.get
+        mock_get.return_value = mock_response
+
+        # Call find_link function with mocked response
+        result = self.stock.find_link("https://www.example.com")
+
+        self.assertEqual(result, False)
+
+    def test_scrap_news_SET(self):
+        # Mock the return value of the find_link function
+        mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
+        
+        # Create an instance of the YourClass object with the mocked find_link function
+        with patch.object(ML_stock, 'find_link', mock_find_link):
+            obj = self.stock
+            
+            # Call the scrap_news_SET method with the mocked return value
+            result = obj.scrap_news_SET("https://example.com", "stock")
+            
+            # Check that the function returns the expected value
+            self.assertEqual(result, True)
+
+    def test_scrap_news_with_nonempty_news(self):
+        # Mock the load_data_news function to return a non-empty list
+        mock_load_data_news = MagicMock(return_value=[{'title': 'Fake news', 'date': '2022-02-20', 'link': 'https://example.com/news/123', 'ticker': 'AAPL.BK'}])
+        scrap_news = self.stock
+        scrap_news.load_data_news = mock_load_data_news
+
+        # Call the function with a fake link and stock
+        result = scrap_news.scrap_news_SET('https://example.com', ['AAPL'])
+
+        # Assert that the function returns False
+        self.assertEqual(result, False)
+
+    
+
+
 class ML_stock:
     def __init__(self,Company):
         self.last = []
         self.LastDate = []
         self.DiffDay = 0
         self.Company = Company
+        self.stock = []
 
     def getLastDate(self,period):
         conn = sqlite3.connect("stock.sqlite")
@@ -153,7 +303,6 @@ class ML_stock:
         if period == 'Hour':query = "SELECT * FROM stock_table_hr WHERE `ticker` = '%s'" % self.Company
         elif period == 'Day':query = "SELECT * FROM stock_table_d WHERE `ticker` = '%s'" % self.Company
         elif period == 'Mount':query = "SELECT * FROM stock_table_mo WHERE `ticker` = '%s'" % self.Company
-        query = "SELECT * FROM stock_table WHERE `ticker` = '%s'" % self.Company
         self.r_df = pd.read_sql(query, conn)
         # Cut data to get only datatime
         last = self.r_df.tail(1).Datetime.to_string().split()
@@ -263,6 +412,111 @@ class ML_stock:
             return data
         except:
             return False
+        
+    def list_set(self):
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        query = "select Ticker from stock_info where `Index` == 'SET100'"
+        stock = pd.read_sql(query,conn)
+        stock = list(stock['Ticker'])
+        for i in stock:
+            temp = i.split('.')
+            self.stock.append(temp[0])
+        return self.stock
+
+    def save_data_news(self, data):
+        # connect to the database
+        conn = sqlite3.connect('stock.sqlite')
+        # save the data to the database
+        data.to_sql('stock_news',con=conn,if_exists='append',index=False)
+            
+
+    def load_data_news(self, date, title, url, ticker):
+        # connect to the database
+        conn = sqlite3.connect('stock.sqlite')
+        cur = conn.cursor()
+        query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?" 
+        cur.execute(query, (date, title, url, ticker))
+        self.news = cur.fetchall()
+        return self.news
+
+    def find_link(self, link):
+        all_link = []
+        response = requests.get(link)
+        soup = BeautifulSoup(response.content, 'lxml')
+        data = soup.find_all(class_="tie-col-md-11 tie-col-sm-10 tie-col-xs-10")
+        
+        if data == []:
+            return False
+
+        for i in data:
+            href = i.find('a').get('href')
+            all_link.append(href)
+        return all_link
+
+    def scrap_news_SET(self, link ,stock):
+        all_link = self.find_link(link)
+
+        for i in all_link:
+            try:
+                url = i
+                response = requests.get(url)
+                soup = BeautifulSoup(response.content, 'lxml')
+                get_url = response.url
+                title = soup.find(class_="post-title entry-title")
+                date = soup.find(class_="date meta-item tie-icon")
+                body = soup.find(class_="entry-content entry clearfix")
+                tag = soup.find_all(rel="tag")
+
+                date = date.text.split("/")
+                date.reverse()
+                if int(date[0]) < 2019:
+                    return False
+                date = "-".join(date)
+                date_format = "%Y-%m-%d"
+                date_obj = datetime.strptime(date, date_format)
+
+                body = body.text.split("\n")
+                body = " ".join(body)
+
+                for ticker in tag:
+                    if ticker.text in stock:
+                        news =  self.load_data_news(date_obj, title.text, get_url, ticker.text)
+                        print(news)
+                        if news != []:
+                                return False
+                        else:
+                            ticker = ticker.text + '.BK'
+                            df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title.text], 'Link':[get_url], 'Body':[body], 'Ticker':[ticker]})
+                            print(df)
+                            self.save_data_news(df)              
+            except:
+                pass
+        return True
+
+    def next_page_scrap(self, stock):
+        num = 1
+        case = True
+        while case == True:
+            num += 1
+            run = self.scrap_news_SET('https://www.kaohoon.com/latest-news/page/'+str(num), stock)
+            if run == False:
+                print('stop')
+                return 'Stop'
+        return True
+            
+    def News_SET100(self):
+        self.stock = self.list_set()
+        work = True
+        while work == True:
+            try:
+                self.scrap_news_SET('https://www.kaohoon.com/latest-news', self.stock)
+                re = self.next_page_scrap(self.stock)
+                if re == 'Stop':
+                    work = False
+            except Exception as e: 
+                print(e)
+        return True
 
     
 if __name__ == '__main__':
