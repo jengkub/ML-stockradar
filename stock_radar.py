@@ -380,13 +380,13 @@ class TestMLStock(unittest.TestCase):
 
 
     def test_news_Nasdaq(self):
-        # Call the method to test here, e.g.
+        # Call the method to test here
         result = self.stock.news_Nasdaq(0)
         # Check the output
         self.assertTrue(result)
 
     def test_news_Crypto(self):
-        # Call the method to test here, e.g.
+        # Call the method to test here
         result = self.stock.news_Crypto(0)
         # Check the output
         self.assertTrue(result)
