@@ -146,7 +146,7 @@ class TestMLStock(unittest.TestCase):
 
 
     @patch('pandas.read_sql')
-    def test_list_set(self, mock_read_sql):
+    def test_list_set_SET(self, mock_read_sql):
         # Set up the mock cursor
         # Set up the mock DataFrame
         df = pd.DataFrame({'Ticker': ['AAV', 'ACE', 'ADVANC', 'AMATA', 'AOT', 'AP', 'AWC', 'BAM', 'BANPU', 'BBL', 'BCH', 'BCP', 'BCPG', 
@@ -165,14 +165,60 @@ class TestMLStock(unittest.TestCase):
         
         # Make assertions about the result
         self.assertEqual(result,['AAV', 'ACE', 'ADVANC', 'AMATA', 'AOT', 'AP', 'AWC', 'BAM', 'BANPU', 'BBL', 'BCH', 'BCP', 'BCPG', 
-                                             'BDMS', 'BEC', 'BEM', 'BGRIM', 'BH', 'BLA', 'BTS', 'BYD', 'CBG', 'CENTEL', 'CHG', 'CK', 'CKP', 'COM7', 
-                                             'CPALL', 'CPF', 'CPN', 'CRC', 'DELTA', 'DOHOME', 'DTAC', 'EA', 'EGCO', 'EPG', 'ESSO', 'FORTH', 'GLOBAL', 
-                                             'GPSC', 'GULF', 'GUNKUL', 'HANA', 'HMPRO', 'INTUCH', 'IRPC', 'IVL', 'JAS', 'JMART', 'JMT', 'KBANK', 'KCE', 
-                                             'KEX', 'KKP', 'KTB', 'KTC', 'LH', 'MEGA', 'MINT', 'MTC', 'NEX', 'ONEE', 'OR', 'ORI', 'OSP', 'PLANB', 'PSL', 
-                                             'PTG', 'PTT', 'PTTEP', 'PTTGC', 'QH', 'RATCH', 'RBF', 'RCL', 'SABUY', 'SAWAD', 'SCB', 'SCC', 'SCGP', 'SINGER', 
-                                             'SPALI', 'SPRC', 'STA', 'STARK', 'STGT', 'TCAP', 'THANI', 'THG', 'TIDLOR', 'TIPH', 'TISCO', 'TOP', 'TQM', 'TRUE', 
-                                             'TTB', 'TU', 'VGI', 'WHA'])
+                                    'BDMS', 'BEC', 'BEM', 'BGRIM', 'BH', 'BLA', 'BTS', 'BYD', 'CBG', 'CENTEL', 'CHG', 'CK', 'CKP', 'COM7', 
+                                    'CPALL', 'CPF', 'CPN', 'CRC', 'DELTA', 'DOHOME', 'DTAC', 'EA', 'EGCO', 'EPG', 'ESSO', 'FORTH', 'GLOBAL', 
+                                    'GPSC', 'GULF', 'GUNKUL', 'HANA', 'HMPRO', 'INTUCH', 'IRPC', 'IVL', 'JAS', 'JMART', 'JMT', 'KBANK', 'KCE', 
+                                    'KEX', 'KKP', 'KTB', 'KTC', 'LH', 'MEGA', 'MINT', 'MTC', 'NEX', 'ONEE', 'OR', 'ORI', 'OSP', 'PLANB', 'PSL', 
+                                    'PTG', 'PTT', 'PTTEP', 'PTTGC', 'QH', 'RATCH', 'RBF', 'RCL', 'SABUY', 'SAWAD', 'SCB', 'SCC', 'SCGP', 'SINGER', 
+                                    'SPALI', 'SPRC', 'STA', 'STARK', 'STGT', 'TCAP', 'THANI', 'THG', 'TIDLOR', 'TIPH', 'TISCO', 'TOP', 'TQM', 'TRUE', 
+                                    'TTB', 'TU', 'VGI', 'WHA'])
+        
+    @patch('pandas.read_sql')
+    def test_list_set_NASDAQ(self, mock_read_sql):
+        # Set up the mock cursor
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Ticker': ['ABNB', 'ADBE', 'ADI', 'ADSK', 'AEP', 'ALGN', 'AMAT', 'AMGN', 'ANSS', 'ATVI', 'AVGO', 'AZN', 'BIIB', 'BKNG', 'BKR', 
+                                        'CEG', 'CHTR', 'COST', 'CPRT', 'CRWD', 'CSCO', 'CSGP', 'CSX', 'CTAS', 'CTSH', 'DLTR', 'DXCM', 'EA', 'EBAY', 'ENPH', 
+                                        'EXC', 'FANG', 'FAST', 'FISV', 'FTNT', 'GOOG', 'GOOGL', 'HON', 'IDXX', 'ILMN', 'ISRG', 'JD', 'KHC', 'KLAC', 'LCID', 
+                                        'LRCX', 'LULU', 'MAR', 'MCHP', 'MDLZ', 'MELI', 'MNST', 'MSFT', 'MU', 'ODFL', 'ORLY', 'PANW', 'PAYX', 'PCAR', 'PDD', 
+                                        'PEP', 'QCOM', 'REGN', 'RIVN', 'ROST', 'SBUX', 'SGEN', 'SIRI', 'SNPS', 'TMUS', 'VRSK', 'VRTX', 'WDAY', 'XEL', 'ZM', 'ZS']})
+        mock_read_sql.return_value = df
 
+        
+        # Call the method being tested
+        result = self.stock.list_nasdaq()
+        
+        # Make assertions about the result
+        self.assertEqual(result,['ABNB', 'ADBE', 'ADI', 'ADSK', 'AEP', 'ALGN', 'AMAT', 'AMGN', 'ANSS', 'ATVI', 'AVGO', 'AZN', 'BIIB', 'BKNG', 'BKR', 
+                                'CEG', 'CHTR', 'COST', 'CPRT', 'CRWD', 'CSCO', 'CSGP', 'CSX', 'CTAS', 'CTSH', 'DLTR', 'DXCM', 'EA', 'EBAY', 'ENPH', 
+                                'EXC', 'FANG', 'FAST', 'FISV', 'FTNT', 'GOOG', 'GOOGL', 'HON', 'IDXX', 'ILMN', 'ISRG', 'JD', 'KHC', 'KLAC', 'LCID', 
+                                'LRCX', 'LULU', 'MAR', 'MCHP', 'MDLZ', 'MELI', 'MNST', 'MSFT', 'MU', 'ODFL', 'ORLY', 'PANW', 'PAYX', 'PCAR', 'PDD', 
+                                'PEP', 'QCOM', 'REGN', 'RIVN', 'ROST', 'SBUX', 'SGEN', 'SIRI', 'SNPS', 'TMUS', 'VRSK', 'VRTX', 'WDAY', 'XEL', 'ZM', 'ZS'])
+
+    @patch('pandas.read_sql')
+    def test_list_set_CRYPTO(self, mock_read_sql):
+        # Set up the mock cursor
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Ticker': ['BTC', 'ETH', 'USDT', 'BNB', 'USDC', 'XRP', 'BUSD', 'ADA', 'DOGE', 'MATIC', 'HEX', 'SOL', 'DOT', 'SHIB', 'LTC', 'WTRX', 'TRX', 
+                                      'AVAX', 'STETH', 'DAI', 'UNI7083', 'WBTC', 'ATOM', 'LINK', 'LEO', 'ETC', 'XMR', 'TON11419', 'OKB', 'BCH', 'APT21794', 'LDO', 
+                                      'HBAR', 'XLM', 'FIL', 'NEAR', 'APE18876', 'CRO', 'ALGO', 'VET', 'QNT', 'ICP', 'GRT6719', 'FTM', 'MANA', 'TMG', 'BTCB', 'BIT11221', 
+                                      'AAVE', 'EOS', 'WBNB', 'AXS', 'EGLD', 'FLOW', 'THETA', 'SAND', 'FRAX', 'LUNC', 'XTZ', 'TUSD', 'IMX10603', 'CHZ', 'MINA', 'HBTC', 
+                                      'USDP', 'RPL', 'HT', 'KCS', 'CRV', 'BSV', 'FXS', 'DASH', 'ZEC', 'MKR', 'USDD', 'BTTOLD', 'BTT', 'CAKE', 'XEC', 'MIOTA', 'TNC5524', 
+                                      'GMX11857', 'SNX', 'KLAY', 'BGB', 'NEO', 'TWT', 'GUSD', 'OP', 'RUNE', 'LRC', 'FTT', 'AGIX', 'PAXG', 'OSMO', 'XRD', 'BABYDOGE', 'GT', 'ZIL', 'CVX']})
+        mock_read_sql.return_value = df
+
+        
+        # Call the method being tested
+        result = self.stock.list_crypto()
+        
+        # Make assertions about the result
+        self.assertEqual(result,['BTC', 'ETH', 'USDT', 'BNB', 'USDC', 'XRP', 'BUSD', 'ADA', 'DOGE', 'MATIC', 'HEX', 'SOL', 'DOT', 'SHIB', 'LTC', 'WTRX', 'TRX', 
+                                'AVAX', 'STETH', 'DAI', 'UNI7083', 'WBTC', 'ATOM', 'LINK', 'LEO', 'ETC', 'XMR', 'TON11419', 'OKB', 'BCH', 'APT21794', 'LDO', 
+                                'HBAR', 'XLM', 'FIL', 'NEAR', 'APE18876', 'CRO', 'ALGO', 'VET', 'QNT', 'ICP', 'GRT6719', 'FTM', 'MANA', 'TMG', 'BTCB', 'BIT11221', 
+                                'AAVE', 'EOS', 'WBNB', 'AXS', 'EGLD', 'FLOW', 'THETA', 'SAND', 'FRAX', 'LUNC', 'XTZ', 'TUSD', 'IMX10603', 'CHZ', 'MINA', 'HBTC', 
+                                'USDP', 'RPL', 'HT', 'KCS', 'CRV', 'BSV', 'FXS', 'DASH', 'ZEC', 'MKR', 'USDD', 'BTTOLD', 'BTT', 'CAKE', 'XEC', 'MIOTA', 'TNC5524', 
+                                'GMX11857', 'SNX', 'KLAY', 'BGB', 'NEO', 'TWT', 'GUSD', 'OP', 'RUNE', 'LRC', 'FTT', 'AGIX', 'PAXG', 'OSMO', 'XRD', 'BABYDOGE', 'GT', 'ZIL', 'CVX'])
+    
 
     @patch('sqlite3.connect')
     @patch('pandas.DataFrame.to_sql')   
@@ -260,34 +306,90 @@ class TestMLStock(unittest.TestCase):
 
         self.assertEqual(result, False)
 
-    def test_scrap_news_SET(self):
+    def test_scrap_news_SET_new_news(self):
         # Mock the return value of the find_link function
         mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
-        
-        # Create an instance of the YourClass object with the mocked find_link function
+
+        # Create an instance of the Class object with the mocked find_link function
         with patch.object(ML_stock, 'find_link', mock_find_link):
             obj = self.stock
-            
+
             # Call the scrap_news_SET method with the mocked return value
-            result = obj.scrap_news_SET("https://example.com", "stock")
-            
+            obj.news = []
+
+            # Call the scrap_news_SET method with the mocked return value
+            result = obj.scrap_news_SET("https://example.com", ['ABC'])
+
             # Check that the function returns the expected value
             self.assertEqual(result, True)
 
-    def test_scrap_news_with_nonempty_news(self):
-        # Mock the load_data_news function to return a non-empty list
-        mock_load_data_news = MagicMock(return_value=[{'title': 'Fake news', 'date': '2022-02-20', 'link': 'https://example.com/news/123', 'ticker': 'AAPL.BK'}])
-        scrap_news = self.stock
-        scrap_news.load_data_news = mock_load_data_news
+            # Check that self.news is not an empty list when self.load_data_news is called
+            self.assertEqual(obj.news, [])
 
-        # Call the function with a fake link and stock
-        result = scrap_news.scrap_news_SET('https://example.com', ['AAPL'])
 
-        # Assert that the function returns False
-        self.assertEqual(result, False)
+    def test_scrap_news_SET_old_news(self):
+        # Mock the return value of the find_link function
+        mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
 
-    
+        # Create an instance of the Class object with the mocked find_link function
+        obj = self.stock
+        with patch.object(obj, 'find_link', mock_find_link):
+            # Mock the return value of the load_data_news function
+            mock_load_data_news = MagicMock(return_value=[['2022-01-01', 'ABC', 'URL', 'Ticker']])
 
+            # Create an instance of the Class object with the mocked load_data_news function
+            with patch.object(obj, 'load_data_news', mock_load_data_news):
+                # Call the scrap_news_SET method with the mocked return value
+                obj.news = [('2022-01-01', 'ABC', 'URL', 'Ticker')]
+                result = obj.scrap_news_SET("https://example.com", ['ABC'])
+
+                # Check that the function returns the expected value
+                self.assertEqual(result, True)
+
+                # Check that self.news is not an empty list when self.load_data_news is called
+                self.assertNotEqual(obj.news, [])
+
+
+    def test_next_page_scrap_success(self):
+        # simulate a case where scrap_news_SET returns True on the second iteration
+        def mock_scrap_news_SET(url, stock):
+            if url == 'https://www.kaohoon.com/latest-news/page/2':
+                return True
+            else:
+                return False
+        self.stock.scrap_news_SET = mock_scrap_news_SET
+
+        # call the method with a mock stock value
+        result = self.stock.next_page_scrap('mock_stock')
+
+        # assert that the method returned True
+        self.assertEqual(result, 'Stop')
+
+    def test_News_SET100(self):
+        # Mock the return value of the find_link function
+        mock_next_page_scrap = MagicMock(return_value='Stop')
+
+        # Create an instance of the Class object with the mocked find_link function
+        with patch.object(ML_stock, 'next_page_scrap', mock_next_page_scrap):
+
+            # Call the scrap_news_SET method with the mocked return value
+            result = self.stock.News_SET100()
+
+            # Check that the function returns the expected value
+            self.assertTrue(result)
+
+
+    def test_news_Nasdaq(self):
+        # Call the method to test here, e.g.
+        result = self.stock.news_Nasdaq(0)
+        # Check the output
+        self.assertTrue(result)
+
+    def test_news_Crypto(self):
+        # Call the method to test here, e.g.
+        result = self.stock.news_Crypto(0)
+        # Check the output
+        self.assertTrue(result)
 
 class ML_stock:
     def __init__(self,Company):
@@ -296,6 +398,7 @@ class ML_stock:
         self.DiffDay = 0
         self.Company = Company
         self.stock = []
+        self.news = []
 
     def getLastDate(self,period):
         conn = sqlite3.connect("stock.sqlite")
@@ -412,8 +515,10 @@ class ML_stock:
             return data
         except:
             return False
-        
+
+    #return all stock in SET100    
     def list_set(self):
+        self.stock = []
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
         query = "select Ticker from stock_info where `Index` == 'SET100'"
@@ -423,14 +528,38 @@ class ML_stock:
             temp = i.split('.')
             self.stock.append(temp[0])
         return self.stock
+    
+    #return all stock in NASDAQ100 
+    def list_nasdaq(self):
+        self.stock = []
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        query = "select Ticker from stock_info where `Index` == 'NASDAQ100'"
+        stock = pd.read_sql(query,conn)
+        self.stock = list(stock['Ticker'])
+        return self.stock
+    
+    #return all Crypto100 
+    def list_crypto(self):
+        self.stock = []
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        query = "select Ticker from stock_info where `Index` == 'CRYPTO100'"
+        stock = pd.read_sql(query,conn)
+        stock = list(stock['Ticker'])
+        for i in stock:
+            temp = i.split('-')
+            self.stock.append(temp[0])
+        return self.stock
 
+    #save news into database
     def save_data_news(self, data):
         # connect to the database
         conn = sqlite3.connect('stock.sqlite')
         # save the data to the database
         data.to_sql('stock_news',con=conn,if_exists='append',index=False)
             
-
+    #load news from database 
     def load_data_news(self, date, title, url, ticker):
         # connect to the database
         conn = sqlite3.connect('stock.sqlite')
@@ -440,6 +569,7 @@ class ML_stock:
         self.news = cur.fetchall()
         return self.news
 
+    #find all link news in website
     def find_link(self, link):
         all_link = []
         response = requests.get(link)
@@ -454,6 +584,7 @@ class ML_stock:
             all_link.append(href)
         return all_link
 
+    #scrap news from website
     def scrap_news_SET(self, link ,stock):
         all_link = self.find_link(link)
 
@@ -481,30 +612,33 @@ class ML_stock:
 
                 for ticker in tag:
                     if ticker.text in stock:
-                        news =  self.load_data_news(date_obj, title.text, get_url, ticker.text)
-                        print(news)
-                        if news != []:
+                        self.news =  self.load_data_news(date_obj, title.text, get_url, ticker.text)
+                        print(self.news)
+                        if self.news != []:
                                 return False
                         else:
                             ticker = ticker.text + '.BK'
                             df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title.text], 'Link':[get_url], 'Body':[body], 'Ticker':[ticker]})
                             print(df)
-                            self.save_data_news(df)              
+                            self.save_data_news(df)                
             except:
                 pass
-        return True
-
+        return True 
+    
+    #find next page
     def next_page_scrap(self, stock):
-        num = 1
-        case = True
-        while case == True:
-            num += 1
-            run = self.scrap_news_SET('https://www.kaohoon.com/latest-news/page/'+str(num), stock)
-            if run == False:
-                print('stop')
-                return 'Stop'
-        return True
-            
+        try:
+            num = 1
+            case = True
+            while case == True:
+                num += 1
+                run = self.scrap_news_SET('https://www.kaohoon.com/latest-news/page/'+str(num), stock)
+                if run == False:
+                    return 'Stop'
+        except:
+            return 'Error'
+        
+    #main scraping function        
     def News_SET100(self):
         self.stock = self.list_set()
         work = True
@@ -517,6 +651,95 @@ class ML_stock:
             except Exception as e: 
                 print(e)
         return True
+    
+    #scrap news from API
+    def news_Nasdaq(self,interger):
+        con = sqlite3.connect("stock.sqlite")
+        cur = con.cursor()
+        try:
+            for i in self.stock[interger:]:
+                ind = self.stock.index(i)
+                url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers='+ i +'&limit=200&apikey=8X8QE27D001F3TV'
+                r = requests.get(url)
+                data = r.json()
+                round = int(data['items'])
+                for j in range(round):
+                    print(j)
+                    title = data['feed'][j]['title']
+                    date = data['feed'][j]['time_published']
+                    get_url = data['feed'][j]['url']
+                    body = data['feed'][j]['summary']
+
+                    date = date.split("T")
+                    date = date[0]
+                    year = date[:4]
+                    mo = date[4:6]
+                    day = date[6:]
+
+                    date = [year,mo,day]
+                    date = "-".join(date)
+                    date_format = "%Y-%m-%d"
+                    date_obj = datetime.strptime(date, date_format)
+
+                    query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?"
+                    cur.execute(query, (date_obj, title, get_url, i))
+                    news = cur.fetchall()
+                    print(news)
+                    if news != []:
+                        break
+                    else:
+                        df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title], 'Link':[get_url], 'Body':[body], 'Ticker':[i]})
+                        print(df)
+                        self.save_data_news(df)
+            return True
+        except: 
+            self.news_Nasdaq(ind)
+
+    #scrap news from API
+    def news_Crypto(self, interger):
+        con = sqlite3.connect("stock.sqlite")
+        cur = con.cursor()
+        try:
+            for i in self.stock[interger:]:
+                print(i)
+                ind = self.stock.index(i)
+                cryp = i.split('-')
+                cryp = cryp[0]
+                # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
+                url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&blockchain='+ cryp +'&limit=200&apikey=8X8QE27D001F3TV'
+                r = requests.get(url)
+                data = r.json()
+                round = int(data['items'])
+                for j in range(round):
+                    print(j)
+                    title = data['feed'][j]['title']
+                    date = data['feed'][j]['time_published']
+                    get_url = data['feed'][j]['url']
+                    body = data['feed'][j]['summary']
+                    date = date.split("T")
+                    date = date[0]
+                    year = date[:4]
+                    mo = date[4:6]
+                    day = date[6:]
+                    date = [year,mo,day]
+                    date = "-".join(date)
+                    date_format = "%Y-%m-%d"
+                    date_obj = datetime.strptime(date, date_format)
+
+                    query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?"
+                    cur.execute(query, (date_obj, title, get_url, i))
+                    news = cur.fetchall()
+                    print(news)
+                    if news != []:
+                        break
+                    else:
+                        df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title], 'Link':[get_url], 'Body':[body], 'Ticker':[i]})
+                        print(df)
+                        self.save_data_news(df)
+            return True
+        except : 
+            self.news_Crypto(ind)
+            
 
     
 if __name__ == '__main__':
