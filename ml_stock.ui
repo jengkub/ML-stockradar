@@ -164,7 +164,7 @@ QPushButton:pressed {
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="Dashboard">
         <widget class="QGraphicsView" name="graphicsView">
@@ -175,6 +175,9 @@ QPushButton:pressed {
            <width>881</width>
            <height>791</height>
           </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(170, 0, 0);</string>
          </property>
         </widget>
        </widget>
