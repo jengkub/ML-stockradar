@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1130</width>
-    <height>781</height>
+    <width>1120</width>
+    <height>780</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>ML Stock</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(26, 6, 106);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="verticalLayoutWidget">
@@ -27,7 +30,8 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="styleSheet">
-        <string notr="true">font: 75 10pt &quot;MS Shell Dlg 2&quot;;</string>
+        <string notr="true">font: 75 10pt &quot;MS Shell Dlg 2&quot;;
+color: rgb(255, 255, 255);</string>
        </property>
        <property name="text">
         <string>ML STOCK RADAR</string>
@@ -48,6 +52,19 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+background-color: rgb(26, 6, 106);
+color: rgb(255, 255, 255);
+border-radius: 10px;
+height: 50px;
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+}
+
+QPushButton:pressed {
+	background-color: rgb(38, 8, 156);
+}</string>
+       </property>
        <property name="text">
         <string>Dashboard</string>
        </property>
@@ -61,6 +78,19 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButton">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+background-color: rgb(26, 6, 106);
+color: rgb(255, 255, 255);
+border-radius: 10px;
+height: 50px;
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+}
+
+QPushButton:pressed {
+	background-color: rgb(38, 8, 156);
+}</string>
+       </property>
        <property name="text">
         <string>Graph</string>
        </property>
@@ -68,6 +98,19 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButton_2">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+background-color: rgb(26, 6, 106);
+color: rgb(255, 255, 255);
+border-radius: 10px;
+height: 50px;
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+}
+
+QPushButton:pressed {
+	background-color: rgb(38, 8, 156);
+}</string>
+       </property>
        <property name="text">
         <string>Financial</string>
        </property>
@@ -75,6 +118,19 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButton_3">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+background-color: rgb(26, 6, 106);
+color: rgb(255, 255, 255);
+border-radius: 10px;
+height: 50px;
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+}
+
+QPushButton:pressed {
+	background-color: rgb(38, 8, 156);
+}</string>
+       </property>
        <property name="text">
         <string>News</string>
        </property>
@@ -106,7 +162,59 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QGraphicsView" name="graphicsView"/>
+      <widget class="QStackedWidget" name="stackedWidget">
+       <property name="currentIndex">
+        <number>3</number>
+       </property>
+       <widget class="QWidget" name="Dashboard">
+        <widget class="QGraphicsView" name="graphicsView">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>881</width>
+           <height>791</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="Graph">
+        <widget class="QGraphicsView" name="graphicsView_2">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>881</width>
+           <height>791</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="Financial">
+        <widget class="QGraphicsView" name="graphicsView_3">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>881</width>
+           <height>791</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="News">
+        <widget class="QGraphicsView" name="graphicsView_4">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>881</width>
+           <height>791</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+      </widget>
      </item>
     </layout>
    </widget>
