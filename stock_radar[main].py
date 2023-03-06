@@ -469,6 +469,7 @@ class ML_stock:
         # Cut extra stock off
         count = count - down
         data['ticker'] = ticker
+        data.index.names = ['Datetime']
         data = data.iloc[count:,:]
         # Select period to download and Save to sqlite
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
