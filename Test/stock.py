@@ -143,8 +143,9 @@ class ML_stock:
     
 # if __name__ == '__main__':
 #     unittest.main()
-ticker = 'AOT.BK'
-a = ML_stock(ticker)
-a.getLastDate()
-print(a.getDiffDay())
-# a.update(ticker)
+# ticker = 'AOT.BK'
+# period = 'Day'
+# a = ML_stock(ticker)
+# a.getLastDate(period)
+# a.getDiffDay()
+# print(a.update(ticker,period))
