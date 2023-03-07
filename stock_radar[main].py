@@ -18,7 +18,8 @@ from PyQt5.QtCore import QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import requests
 from bs4 import BeautifulSoup
-
+import locationtagger
+from geopy.geocoders import Nominatim
 
 
 class TestMLStock(unittest.TestCase):
@@ -90,6 +91,7 @@ class TestMLStock(unittest.TestCase):
 
         # Set up the mock DataFrame
         df = pd.DataFrame({'ticker': ['ABC']}, index=[datetime.datetime(2022, 1, 1)])
+        df.index.name = 'Datetime'
         mock_download.return_value = df
         # Set up the mock DataFrame returned by the update method
         mock_data = df
@@ -119,7 +121,7 @@ class TestMLStock(unittest.TestCase):
         mock_read_sql.return_value = df
         
         # Call the method being tested
-        result = self.stock.getAllticker('Test')
+        result = self.stock.getAllticker()
 
         # Make assertions about the result
         self.assertEqual(result,['ABC','KKK'])
@@ -390,6 +392,40 @@ class TestMLStock(unittest.TestCase):
         result = self.stock.news_Crypto(0)
         # Check the output
         self.assertTrue(result)
+    
+    def test_getcity_and_latlong_have(self):
+        Testtext = "I've live in London then I go to Bangkok when I was 20 years old"
+        # Call the method to test here
+        result = self.stock.getcity_and_latlong(Testtext)
+        # Check the output
+        df = pd.DataFrame({'city': ['Bangkok','London'],'lat':[13.752494,51.507336],'long':[100.493509,-0.12765]})
+        assert_frame_equal(result, df)
+
+    def test_getcity_and_latlong_nothave(self):
+        Testtext = "I've live in asdwasdwadwasdwasdwasdw"
+        # Call the method to test here
+        result = self.stock.getcity_and_latlong(Testtext)
+        # Check the output
+        df = pd.DataFrame({'city': [],'lat':[],'long':[]})
+        assert_frame_equal(result, df)
+    
+    def test_get_poppulate_for_city_have(self):
+        df = pd.DataFrame({'city': ['Bangkok','Bangkok','London'],'lat':[13.752494,13.752494,51.507336],'long':[100.493509,100.493509,-0.12765]})
+        self.stock.place = df
+        # Call the method to test here
+        result = self.stock.get_poppulate_for_city()
+        # Check the output
+        for_test = pd.DataFrame({'city': ['Bangkok','London'],'lat':[13.752494,51.507336],'long':[100.493509,-0.12765],'population':[2,1]})
+        assert_frame_equal(result, for_test)
+
+    def test_get_poppulate_for_city_nothave(self):
+        df = pd.DataFrame({'city': ['Bangkok','London'],'lat':[13.752494,51.507336],'long':[100.493509,-0.12765]})
+        self.stock.place = df
+        # Call the method to test here
+        result = self.stock.get_poppulate_for_city()
+        # Check the output
+        for_test = pd.DataFrame({'city': ['Bangkok','London'],'lat':[13.752494,51.507336],'long':[100.493509,-0.12765],'population':[1,1]})
+        assert_frame_equal(result, for_test)
 
 class ML_stock:
     def __init__(self,Company):
@@ -469,8 +505,8 @@ class ML_stock:
         # Cut extra stock off
         count = count - down
         data['ticker'] = ticker
-        data.index.names = ['Datetime']
         data = data.iloc[count:,:]
+        data.index.names = ['Datetime']
         # Select period to download and Save to sqlite
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         elif period == 'Day':data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
@@ -482,17 +518,10 @@ class ML_stock:
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         elif period == 'Day':data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
         elif period == 'Mount':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
-    def getAllticker(self,period):
+    def getAllticker(self):
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
-        if period == 'Hour':
-            query = "select distinct Ticker from stock_table_hr"
-        elif period == 'Day':
-            query = "select distinct Ticker from stock_table_d"
-        elif period == 'Mount':
-            query = "select distinct Ticker from stock_table_mo"
-        else:
-            query = ""
+        query = "select Ticker from stock_info"
         r_df = pd.read_sql(query,conn)
         self.list_db = r_df['Ticker'].values.tolist()
         return self.list_db
@@ -740,8 +769,63 @@ class ML_stock:
             return True
         except : 
             self.news_Crypto(ind)
-            
+
+    def get_news_content(self):
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        self.content_news = pd.DataFrame()
+
+        for i in self.list_db:
+            query2 = "SELECT ticker,body FROM stock_news WHERE `Ticker` = '%s'" % i
+            news = pd.read_sql(query2, conn)
+            if not(news.empty):
+                self.content_news = pd.concat([self.content_news,news],ignore_index=True)
+    
+    def getcity_and_latlong(self,text):
+        # extracting entities.
+        place_entity = locationtagger.find_locations(text = text)
+
+        # calling the Nominatim tool
+        loc = Nominatim(user_agent="GetLoc")
+        address = pd.DataFrame({'city': [],'lat':[],'long':[]})
+
+        for i in place_entity.cities:
+            getLoc = loc.geocode(i)
+            ones_city = pd.DataFrame({'city':[i],'lat':[getLoc.latitude],'long':[getLoc.longitude]})
+            # getting all cities
+            address = pd.concat([address,ones_city],ignore_index=True)
+        return address
+    
+    def get_latlong_for_all_content(self):
+        self.place = pd.DataFrame()
+        count = 0
+        for i in self.content_news['Body']:
+            if count < 100:
+                data = self.getcity_and_latlong()
+                self.place = pd.concat([self.place,data],ignore_index=True)
+            else:
+                break
+            count += 1
+        return self.place
+    
+    def get_poppulate_for_city(self):
+        self.add = self.place.groupby(self.place.columns.tolist(),as_index=False).size()
+        self.add.rename(columns={'size': 'population'}, inplace=True)
+        return self.add
 
     
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
+
+# ticker = 'AOT.BK'
+# text = "Im from Mars"
+# df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
+# period = 'Day'
+# a = ML_stock(ticker)
+# print('here')
+# print(a.getcity_and_latlong(text))
+# a.place = df
+# print(a.get_poppulate_for_city())
+# a.getLastDate(period)
+# a.getDiffDay()
+# print(a.update(ticker,period))
