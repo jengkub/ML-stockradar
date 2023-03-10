@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1120</width>
-    <height>780</height>
+    <width>1118</width>
+    <height>779</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
       <height>781</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout" stretch="2,2,2,2,2,4">
+    <layout class="QVBoxLayout" name="verticalLayout" stretch="2,2,2,2,2,0,4">
      <item>
       <widget class="QLabel" name="label">
        <property name="styleSheet">
@@ -137,6 +137,26 @@ QPushButton:pressed {
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButton_5">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+background-color: rgb(26, 6, 106);
+color: rgb(255, 255, 255);
+border-radius: 10px;
+height: 50px;
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+}
+
+QPushButton:pressed {
+	background-color: rgb(38, 8, 156);
+}</string>
+       </property>
+       <property name="text">
+        <string>Location</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -162,60 +182,22 @@ QPushButton:pressed {
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QStackedWidget" name="stackedWidget">
-       <property name="currentIndex">
-        <number>0</number>
+      <widget class="QFrame" name="frame">
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
        </property>
-       <widget class="QWidget" name="Dashboard">
-        <widget class="QGraphicsView" name="graphicsView">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>881</width>
-           <height>791</height>
-          </rect>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">background-color: rgb(170, 0, 0);</string>
-         </property>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="Graph">
-        <widget class="QGraphicsView" name="graphicsView_2">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>881</width>
-           <height>791</height>
-          </rect>
-         </property>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="Financial">
-        <widget class="QGraphicsView" name="graphicsView_3">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>881</width>
-           <height>791</height>
-          </rect>
-         </property>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="News">
-        <widget class="QGraphicsView" name="graphicsView_4">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>881</width>
-           <height>791</height>
-          </rect>
-         </property>
-        </widget>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <widget class="QGraphicsView" name="graphicsView">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>841</width>
+          <height>731</height>
+         </rect>
+        </property>
        </widget>
       </widget>
      </item>
