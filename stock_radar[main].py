@@ -491,7 +491,7 @@ class ML_stock:
         for i in data.index.day:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
-                    if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3:
+                    if i == int(self.LastDate[2]) or i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3:
                         break
             count += 1
         #for get extra time in database
@@ -800,7 +800,7 @@ class ML_stock:
         self.place = pd.DataFrame()
         count = 0
         for i in self.content_news['Body']:
-            if count < 100:
+            if count < 1000:
                 data = self.getcity_and_latlong()
                 self.place = pd.concat([self.place,data],ignore_index=True)
             else:
