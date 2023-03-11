@@ -59,7 +59,7 @@ class TestMLStock(unittest.TestCase):
         result = self.stock.getDiffDay()
 
         # Make assertions about the result
-        self.assertEqual(result, '0d')
+        self.assertEqual(result, 0)
 
     @patch('datetime.datetime')
     def test_getDiffDay_OneYear(self, mock_datetime):
@@ -74,7 +74,7 @@ class TestMLStock(unittest.TestCase):
         result = self.stock.getDiffDay()
 
         # assertions about the result
-        self.assertEqual(result, '365d')
+        self.assertEqual(result, 365)
 
     @patch('yfinance.download')
     @patch('sqlite3.connect')
@@ -476,7 +476,7 @@ class ML_stock:
             for i in range(1,int(x.month)):
                 dayn = dayn + DayMo365[str(i)]
             DiffDay = (365*DiffYe) - dayly + dayn - int(self.LastDate[2]) + int(x.day)   
-        self.DiffDay = str(DiffDay) + 'd'
+        self.DiffDay = DiffDay
         return self.DiffDay
         
     def check_stock(self,ticker):
@@ -487,7 +487,7 @@ class ML_stock:
         ok = self.r_df.tail(1).Datetime.to_string().split()[2]
         #for get extra time in database
         if for_ind['Index'].values == 'NASDAQ100':
-            DiffDay = str(DiffDay)+'d'
+            self.DiffDay = str(self.DiffDay)+'d'
             if ok == '09:30:00':down = 6
             elif ok == '10:30:00':down = 5
             elif ok == '11:30:00':down = 4
@@ -496,7 +496,7 @@ class ML_stock:
             elif ok == '14:30:00':down = 1
             elif ok == '15:30:00':down = 0
         elif for_ind['Index'].values == 'SET100':
-            DiffDay = str(DiffDay)+'d'
+            self.DiffDay = str(self.DiffDay)+'d'
             if ok == '10:00:00':down = 5
             elif ok == '11:00:00':down = 4
             elif ok == '12:00:00':down = 3
@@ -504,7 +504,7 @@ class ML_stock:
             elif ok == '15:00:00':down = 1
             elif ok == '16:00:00':down = 0
         elif for_ind['Index'].values == 'CRYPTO100':
-            DiffDay = str(DiffDay+1)+'d'
+            self.DiffDay = str(self.DiffDay+1)+'d'
             if ok == '00:00:00':down = 23
             elif ok == '01:00:00':down = 22
             elif ok == '02:00:00':down = 21
@@ -536,15 +536,19 @@ class ML_stock:
         count = 0
         conn = sqlite3.connect("stock.sqlite")
         # Select period to download
-        if period == 'Hour':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h')
-        elif period == 'Day':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d')
-        elif period == 'Mount':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1mo')
+        if period == 'Hour':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h',progress=False)
+        elif period == 'Day':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d',progress=False)
+        elif period == 'Mount':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1mo',progress=False)
         # Get number of extra stock
         for i in data.index.day:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
-                    if i == int(self.LastDate[2]) or i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3:
-                        break
+                    if period == 'Month':
+                        if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3 or i == int(self.LastDate[2]):
+                            break
+                    else:
+                        if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3:
+                            break
             count += 1
         # Cut extra stock off
         count = count - self.down
@@ -870,17 +874,17 @@ class ML_stock:
             except:
                 pass
     
-if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+# if __name__ == '__main__':
+#     unittest.main(argv=['first-arg-is-ignored'], exit=False)
 
-# ticker = 'AOT.BK'
+ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-# a = ML_stock(ticker)
+a = ML_stock(ticker)
 # print('here')
 # print(a.getcity_and_latlong(text))
-# a.place = df
+a.updateAll()
 # print(a.get_poppulate_for_city())
 # a.getLastDate(period)
 # a.getDiffDay()
