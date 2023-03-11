@@ -442,7 +442,7 @@ class ML_stock:
         # Query last element of stock in database
         if period == 'Hour':query = "SELECT * FROM stock_table_hr WHERE `ticker` = '%s'" % ticker
         elif period == 'Day':query = "SELECT * FROM stock_table_d WHERE `ticker` = '%s'" % ticker
-        elif period == 'Mount':query = "SELECT * FROM stock_table_mo WHERE `ticker` = '%s'" % ticker
+        elif period == 'Month':query = "SELECT * FROM stock_table_mo WHERE `ticker` = '%s'" % ticker
         self.r_df = pd.read_sql(query, conn)
         # Cut data to get only datatime
         last = self.r_df.tail(1).Datetime.to_string().split()
@@ -538,7 +538,7 @@ class ML_stock:
         # Select period to download
         if period == 'Hour':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h',progress=False)
         elif period == 'Day':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d',progress=False)
-        elif period == 'Mount':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1mo',progress=False)
+        elif period == 'Month':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1mo',progress=False)
         # Get number of extra stock
         for i in data.index.day:
             if data.index.year[count] == int(self.LastDate[0]):
@@ -558,14 +558,14 @@ class ML_stock:
         # Select period to download and Save to sqlite
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         elif period == 'Day':data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
-        elif period == 'Mount':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
+        elif period == 'Month':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
         return data
 
     def savetoDB(self,period,data):
         conn = sqlite3.connect("stock.sqlite")
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         elif period == 'Day':data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
-        elif period == 'Mount':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
+        elif period == 'Month':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
     def getAllticker(self):
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
@@ -583,7 +583,7 @@ class ML_stock:
                 data = yf.download(tickers=ticker, period='2y', interval='1h')
             elif period == 'Day':
                 data = yf.download(tickers=ticker, period='max', interval='1d')
-            elif period == 'Mount':
+            elif period == 'Month':
                 data = yf.download(tickers=ticker, period='max', interval='1mo')
             else:
                 data = None
