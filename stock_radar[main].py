@@ -40,7 +40,7 @@ class TestMLStock(unittest.TestCase):
         mock_read_sql.return_value = df
 
         # Call the method being tested
-        result = self.stock.getLastDate('Hour')
+        result = self.stock.getLastDate('Hour','ABC')
 
         # Make assertions about the result
         self.assertEqual(result, ['2022', '01', '01'])
@@ -82,6 +82,7 @@ class TestMLStock(unittest.TestCase):
         # Set lastdate ind sec
         self.stock.LastDate = ['2022', '01', '01']  # Set the LastDate attribute to a known value
         self.stock.r_df = pd.DataFrame({'ticker': ['ABC'], 'Datetime': ['2022-01-01 10:00:00']})
+        self.stock.down = 0
         # Set up the mock cursor
         mock_conn = MagicMock()
         mock_cursor = mock_connect.return_value.cursor.return_value
@@ -99,7 +100,7 @@ class TestMLStock(unittest.TestCase):
         mock_data.to_sql = MagicMock()
 
         # Call the method being tested
-        result = self.stock.update('ABC', 'Hour')
+        result = self.stock.update('Hour','ABC')
         mock_data.to_sql('stock_table', con=mock_conn, if_exists='append', index=True)
         # Make assertions about the result
         assert_frame_equal(result, mock_data)
@@ -436,12 +437,12 @@ class ML_stock:
         self.stock = []
         self.news = []
 
-    def getLastDate(self,period):
+    def getLastDate(self,period,ticker):
         conn = sqlite3.connect("stock.sqlite")
         # Query last element of stock in database
-        if period == 'Hour':query = "SELECT * FROM stock_table_hr WHERE `ticker` = '%s'" % self.Company
-        elif period == 'Day':query = "SELECT * FROM stock_table_d WHERE `ticker` = '%s'" % self.Company
-        elif period == 'Mount':query = "SELECT * FROM stock_table_mo WHERE `ticker` = '%s'" % self.Company
+        if period == 'Hour':query = "SELECT * FROM stock_table_hr WHERE `ticker` = '%s'" % ticker
+        elif period == 'Day':query = "SELECT * FROM stock_table_d WHERE `ticker` = '%s'" % ticker
+        elif period == 'Mount':query = "SELECT * FROM stock_table_mo WHERE `ticker` = '%s'" % ticker
         self.r_df = pd.read_sql(query, conn)
         # Cut data to get only datatime
         last = self.r_df.tail(1).Datetime.to_string().split()
@@ -478,9 +479,60 @@ class ML_stock:
         self.DiffDay = str(DiffDay) + 'd'
         return self.DiffDay
         
-        
-    def update(self,ticker,period):
+    def check_stock(self):
+        conn = sqlite3.connect("stock.sqlite")
         down = 0
+        query = "SELECT `Index` FROM stock_info WHERE `ticker` = '%s'" % ticker
+        for_ind = pd.read_sql(query, conn)
+        ok = self.r_df.tail(1).Datetime.to_string().split()[2]
+        #for get extra time in database
+        if for_ind['Index'].values == 'NASDAQ100':
+            DiffDay = str(DiffDay)+'d'
+            if ok == '09:30:00':down = 6
+            elif ok == '10:30:00':down = 5
+            elif ok == '11:30:00':down = 4
+            elif ok == '12:30:00':down = 3
+            elif ok == '13:30:00':down = 2
+            elif ok == '14:30:00':down = 1
+            elif ok == '15:30:00':down = 0
+        elif for_ind['Index'].values == 'SET100':
+            DiffDay = str(DiffDay)+'d'
+            if ok == '10:00:00':down = 5
+            elif ok == '11:00:00':down = 4
+            elif ok == '12:00:00':down = 3
+            elif ok == '14:00:00':down = 2
+            elif ok == '15:00:00':down = 1
+            elif ok == '16:00:00':down = 0
+        elif for_ind['Index'].values == 'CRYPTO100':
+            DiffDay = str(DiffDay+1)+'d'
+            if ok == '00:00:00':down = 23
+            elif ok == '01:00:00':down = 22
+            elif ok == '02:00:00':down = 21
+            elif ok == '03:00:00':down = 20
+            elif ok == '04:00:00':down = 19
+            elif ok == '05:00:00':down = 18
+            elif ok == '06:00:00':down = 17
+            elif ok == '07:00:00':down = 16
+            elif ok == '08:00:00':down = 15
+            elif ok == '09:00:00':down = 14
+            elif ok == '10:00:00':down = 13
+            elif ok == '11:00:00':down = 12
+            elif ok == '12:00:00':down = 11
+            elif ok == '13:00:00':down = 10
+            elif ok == '14:00:00':down = 9
+            elif ok == '15:00:00':down = 8
+            elif ok == '16:00:00':down = 7
+            elif ok == '17:00:00':down = 6
+            elif ok == '18:00:00':down = 5
+            elif ok == '19:00:00':down = 4
+            elif ok == '20:00:00':down = 3
+            elif ok == '21:00:00':down = 2
+            elif ok == '22:00:00':down = 1
+            elif ok == '23:00:00':down = 0
+        self.down = down
+        return self.down
+    
+    def update(self,period,ticker):
         count = 0
         conn = sqlite3.connect("stock.sqlite")
         # Select period to download
@@ -494,16 +546,8 @@ class ML_stock:
                     if i == int(self.LastDate[2]) or i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3:
                         break
             count += 1
-        #for get extra time in database
-        ok = self.r_df.tail(1).Datetime.to_string().split()[2]
-        if ok == '10:00:00':down = 5
-        elif ok == '11:00:00':down = 4
-        elif ok == '12:00:00':down = 3
-        elif ok == '14:00:00':down = 2
-        elif ok == '15:00:00':down = 1
-        elif ok == '16:00:00':down = 0
         # Cut extra stock off
-        count = count - down
+        count = count - self.down
         data['ticker'] = ticker
         data = data.iloc[count:,:]
         data.index.names = ['Datetime']
@@ -813,6 +857,18 @@ class ML_stock:
         self.add.rename(columns={'size': 'population'}, inplace=True)
         return self.add
 
+    def updateAll(self):
+        period = ['Hour','Day','Month']
+        Ticker = self.getAllticker()
+        for  i in Ticker:
+            try:
+                for j in period:
+                    self.getLastDate(j,i)
+                    self.getDiffDay()
+                    self.check_stock()
+                    self.update(j,i)
+            except:
+                pass
     
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
