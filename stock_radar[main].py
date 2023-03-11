@@ -479,7 +479,7 @@ class ML_stock:
         self.DiffDay = str(DiffDay) + 'd'
         return self.DiffDay
         
-    def check_stock(self):
+    def check_stock(self,ticker):
         conn = sqlite3.connect("stock.sqlite")
         down = 0
         query = "SELECT `Index` FROM stock_info WHERE `ticker` = '%s'" % ticker
@@ -865,7 +865,7 @@ class ML_stock:
                 for j in period:
                     self.getLastDate(j,i)
                     self.getDiffDay()
-                    self.check_stock()
+                    self.check_stock(i)
                     self.update(j,i)
             except:
                 pass
