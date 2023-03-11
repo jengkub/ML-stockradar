@@ -91,7 +91,7 @@ class TestMLStock(unittest.TestCase):
         mock_cursor.fetchone.return_value = ('ABC', '2022-01-01 10:00:00')
 
         # Set up the mock DataFrame
-        df = pd.DataFrame({'ticker': ['ABC']}, index=[datetime.datetime(2022, 1, 1)])
+        df = pd.DataFrame({'ticker': ['ABC']}, index=[datetime.datetime(2022, 1, 2)])
         df.index.name = 'Datetime'
         mock_download.return_value = df
         # Set up the mock DataFrame returned by the update method
@@ -105,7 +105,7 @@ class TestMLStock(unittest.TestCase):
         # Make assertions about the result
         assert_frame_equal(result, mock_data)
         # self.assertTrue(result.equals(df))
-        mock_download.assert_called_once_with(tickers='ABC', period=self.stock.DiffDay, interval='1h')
+        mock_download.assert_called_once_with(tickers='ABC', period=self.stock.DiffDay, interval='1h', progress=False)
         mock_data.to_sql.assert_called_once_with('stock_table', con=mock_conn, if_exists='append', index=True)
 
     @patch('sqlite3.connect')
@@ -874,17 +874,17 @@ class ML_stock:
             except:
                 pass
     
-# if __name__ == '__main__':
-#     unittest.main(argv=['first-arg-is-ignored'], exit=False)
+if __name__ == '__main__':
+    unittest.main(argv=['first-arg-is-ignored'], exit=False)
 
-ticker = 'AOT.BK'
+# ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-a = ML_stock(ticker)
+# a = ML_stock(ticker)
 # print('here')
 # print(a.getcity_and_latlong(text))
-a.updateAll()
+# a.updateAll()
 # print(a.get_poppulate_for_city())
 # a.getLastDate(period)
 # a.getDiffDay()
