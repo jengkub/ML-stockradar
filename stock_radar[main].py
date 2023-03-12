@@ -874,17 +874,17 @@ class ML_stock:
             except:
                 pass
     
-if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+# if __name__ == '__main__':
+#     unittest.main(argv=['first-arg-is-ignored'], exit=False)
 
-# ticker = 'AOT.BK'
+ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-# a = ML_stock(ticker)
+a = ML_stock(ticker)
 # print('here')
 # print(a.getcity_and_latlong(text))
-# a.updateAll()
+a.updateAll()
 # print(a.get_poppulate_for_city())
 # a.getLastDate(period)
 # a.getDiffDay()
