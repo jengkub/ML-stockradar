@@ -24,7 +24,7 @@ from geopy.geocoders import Nominatim
 
 class TestMLStock(unittest.TestCase):
     def setUp(self):
-        self.stock = ML_stock('ABC')
+        self.stock = ML_stock()
 
     @patch('sqlite3.connect')
     @patch('pandas.read_sql')
@@ -429,11 +429,10 @@ class TestMLStock(unittest.TestCase):
         assert_frame_equal(result, for_test)
 
 class ML_stock:
-    def __init__(self,Company):
+    def __init__(self):
         self.last = []
         self.LastDate = []
         self.DiffDay = 0
-        self.Company = Company
         self.stock = []
         self.news = []
 
@@ -882,7 +881,7 @@ ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-a = ML_stock(ticker)
+a = ML_stock()
 # a.getLastDate('Hour','PTT.BK')
 # a.getDiffDay()
 # a.check_stock('PTT.BK')
