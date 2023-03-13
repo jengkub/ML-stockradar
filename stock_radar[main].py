@@ -535,6 +535,7 @@ class ML_stock:
     def update(self,period,ticker):
         count = 0
         conn = sqlite3.connect("stock.sqlite")
+        print(self.LastDate)
         # Select period to download
         if period == 'Hour':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h',progress=False)
         elif period == 'Day':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d',progress=False)
@@ -551,10 +552,12 @@ class ML_stock:
                             break
             count += 1
         # Cut extra stock off
-        count = count - self.down
+        if count != len(data):
+            count = count - self.down
         data['ticker'] = ticker
         data = data.iloc[count:,:]
         data.index.names = ['Datetime']
+        print(data)
         # Select period to download and Save to sqlite
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         elif period == 'Day':data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
@@ -882,9 +885,13 @@ ticker = 'AOT.BK'
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
 a = ML_stock(ticker)
+a.getLastDate('Hour','PTT.BK')
+a.getDiffDay()
+a.check_stock('PTT.BK')
+a.update('Hour','PTT.BK')
 # print('here')
 # print(a.getcity_and_latlong(text))
-a.updateAll()
+# a.updateAll()
 # print(a.get_poppulate_for_city())
 # a.getLastDate(period)
 # a.getDiffDay()
