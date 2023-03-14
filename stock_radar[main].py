@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch,MagicMock , Mock
+from unittest import mock
 import sqlite3
 import pandas as pd
 import datetime
@@ -20,7 +21,8 @@ import requests
 from bs4 import BeautifulSoup
 import locationtagger
 from geopy.geocoders import Nominatim
-
+import translators as ts
+import translators.server as tss
 
 class TestMLStock(unittest.TestCase):
     def setUp(self):
@@ -427,6 +429,51 @@ class TestMLStock(unittest.TestCase):
         # Check the output
         for_test = pd.DataFrame({'city': ['Bangkok','London'],'lat':[13.752494,51.507336],'long':[100.493509,-0.12765],'population':[1,1]})
         assert_frame_equal(result, for_test)
+    
+    def test_trans_set100_1(self):
+        df = pd.DataFrame({'Datetime': [datetime.datetime(2022, 1, 2)],'Ticker':['Test'],'Body':['สวัสดี']})
+        mock_input = df
+        # Set the expected value of the result
+        for_test = pd.DataFrame({'Datetime': [datetime.datetime(2022, 1, 2)],'Ticker':['Test'],'Body':['hello']})
+        # Call the method to test here
+        result = self.stock.trans_set100(mock_input)
+        assert_frame_equal(result, for_test)
+
+    def test_trans_set100_2(self):
+        df = pd.DataFrame({'Datetime': [datetime.datetime(2022, 1, 2)],'Ticker':['Test'],'Body':['']})
+        mock_input = df
+        # Set the expected value of the result
+        for_test = pd.DataFrame()
+        # Call the method to test here
+        result = self.stock.trans_set100(mock_input)
+        assert_frame_equal(result, for_test)
+
+    @patch('pandas.read_sql')
+    def test_update_place(self,mock_read_sql):
+        # Define the mock return values
+        mock_check_index = pd.DataFrame({'Index':['SET100']})
+        mock_check_Dplace = pd.DataFrame({'Datetime':[datetime.datetime(2023, 3, 1)]})
+        mock_get_news = pd.DataFrame({'Datetime': ['2023-03-02'], 'Ticker': ['AAPL'], 'Body': ['some news']})
+
+        # Mock the return value of trans_set100 and get_latlong_for_all_content to simulate data processing
+        mock_trans_set100 = MagicMock(return_value = pd.DataFrame({'Datetime': ['2022-03-02'], 'Ticker': ['ABC'], 'Body': ['some translated news']}))
+        mock_get_latlong_for_all_content = MagicMock(return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']}))
+        for_test = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
+        # Set the mock return values for the read_sql function
+        mock_read_sql.side_effect = [
+            mock_check_index,
+            mock_check_Dplace,
+            mock_get_news
+        ]
+        obj = self.stock
+        with patch.object(obj, 'get_latlong_for_all_content', mock_get_latlong_for_all_content):
+            # Mock the return value of the load_data_news function
+            mock_get_latlong_for_all_content.return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
+            # call the code that uses my_function
+            result = obj.update_place('AAPL')
+
+            # assert that the result is as expected
+            assert_frame_equal(result, for_test)
 
 class ML_stock:
     def __init__(self):
@@ -844,16 +891,14 @@ class ML_stock:
             address = pd.concat([address,ones_city],ignore_index=True)
         return address
     
-    def get_latlong_for_all_content(self):
+    def get_latlong_for_all_content(self,df):
         self.place = pd.DataFrame()
-        count = 0
-        for i in self.content_news['Body']:
-            if count < 1000:
-                data = self.getcity_and_latlong()
-                self.place = pd.concat([self.place,data],ignore_index=True)
-            else:
-                break
-            count += 1
+        a = len(df)
+        for i in range(a):
+            data = self.getcity_and_latlong(df.iloc[i]['Body'])
+            data['Datetime'] = df.iloc[i]['Datetime']
+            data['Ticker'] = df.iloc[i]['Ticker']
+            self.place = pd.concat([self.place,data],ignore_index=True)
         return self.place
     
     def get_poppulate_for_city(self):
@@ -874,21 +919,49 @@ class ML_stock:
             except:
                 pass
     
-# if __name__ == '__main__':
-#     unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    def trans_set100(self,df2):
+        count = 0
+        a = len(df2)
+        data_thai = pd.DataFrame()
+        for i in range(a):
+            try:
+                data = pd.DataFrame({'Datetime':[df2.iloc[i]['Datetime']],'Ticker':[df2.iloc[i]['Ticker']],'Body':[tss.google(df2.iloc[i]['Body'])]})
+                data_thai = pd.concat([data_thai,data],ignore_index=True)
+            except:
+                pass
+        return data_thai
+    
+    def update_place(self,ticker):
+        conn = sqlite3.connect("stock.sqlite")
+        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+        query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
+        check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
+        query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
+        get_news = pd.read_sql(query_news, conn)
+        if check_index == 'SET100':
+            eng = self.trans_set100(get_news)
+            place = self.get_latlong_for_all_content(eng)
+        else:
+            place = self.get_latlong_for_all_content(get_news)
+        place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+        return place
+    
+if __name__ == '__main__':
+    unittest.main(argv=['first-arg-is-ignored'], exit=False)
 
-ticker = 'AOT.BK'
+# ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-a = ML_stock()
+# a = ML_stock()
 # a.getLastDate('Hour','PTT.BK')
 # a.getDiffDay()
 # a.check_stock('PTT.BK')
 # a.update('Hour','PTT.BK')
 # print('here')
 # print(a.getcity_and_latlong(text))
-a.updateAll()
+# a.updateAll()
 # print(a.get_poppulate_for_city())
 # a.getLastDate(period)
 # a.getDiffDay()
