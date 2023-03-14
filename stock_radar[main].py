@@ -909,7 +909,11 @@ class ML_stock:
     def updateAll(self):
         period = ['Hour','Day','Month']
         Ticker = self.getAllticker()
+        self.News_SET100()
+        self.news_Nasdaq(0)
+        self.news_Crypto(0)
         for  i in Ticker:
+            self.update_place(i)
             try:
                 for j in period:
                     self.getLastDate(j,i)
