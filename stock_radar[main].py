@@ -1144,22 +1144,305 @@ class ML_stock:
                 pass
         return data_thai
     
-    # def update_place(self,ticker):
-    #     conn = sqlite3.connect("stock.sqlite")
-    #     query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
-    #     check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
-    #     query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
-    #     check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
-    #     query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
-    #     get_news = pd.read_sql(query_news, conn)
-    #     if check_index == 'SET100':
-    #         eng = self.trans_set100(get_news)
-    #         place = self.get_latlong_for_all_content(eng)
-    #     else:
-    #         place = self.get_latlong_for_all_content(get_news)
-    #     place.to_sql('stock_city',con=conn,if_exists='append',index=False)
-    #     return place
+    def download_place(self,ticker):
+        conn = sqlite3.connect("stock.sqlite")
+        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+        query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE `Ticker` == '%s'" % (ticker)
+        get_news = pd.read_sql(query_news, conn)
+        if check_index == 'SET100':
+            eng = self.trans_set100(get_news)
+            place = self.get_latlong_for_all_content(eng)
+        else:
+            place = self.get_latlong_for_all_content(get_news)
+        place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+        return place
     
+    def update_place(self,ticker):
+        conn = sqlite3.connect("stock.sqlite")
+        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+        query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
+        check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
+        query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
+        get_news = pd.read_sql(query_news, conn)
+        if check_index == 'SET100':
+            eng = self.trans_set100(get_news)
+            place = self.get_latlong_for_all_content(eng)
+        else:
+            place = self.get_latlong_for_all_content(get_news)
+        place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+        return place
+
+    def download_info(self,Ticker):
+        conn = sqlite3.connect("stock.sqlite")
+        all_link = []
+        op = webdriver.ChromeOptions()
+        op.add_argument('headless') 
+        driver = webdriver.Chrome(options=op)
+        df2 = pd.DataFrame()
+        InsSec = []
+        driver.get("https://finance.yahoo.com/quote/%s/profile?p=%s"% (Ticker,Ticker))
+        numlink = driver.find_elements(By.XPATH, '//span[@class="Fw(600)"]')
+        for i in numlink[:2]:
+            InsSec.append(i.text)
+        df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['NASDAQ100']})
+        df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
+        return df1
+
+    def download_stock(self,Ticker):
+        conn = sqlite3.connect("stock.sqlite")
+        df_h = yf.download(tickers=Ticker, period='2y', interval='1h')
+        df_h['Ticker'] = Ticker
+        df_d = yf.download(tickers=Ticker, period='max', interval='1d')
+        df_d['Ticker'] = Ticker
+        df_d.index.names = ['Datetime']
+        df_mo = yf.download(tickers=Ticker, period='max', interval='1mo')
+        df_mo['Ticker'] = Ticker
+        df_mo.index.names = ['Datetime']
+
+        df_h.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
+        df_d.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
+        df_mo.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
+
+    def download_year (self,ticker,save):
+        test = []
+        test2 = []
+        test3 = []
+        count = 0
+        revenue,YoYR = [],[]
+
+        # Create a SQL connection to our SQLite database
+        conn = sqlite3.connect("stock.sqlite")
+
+        op = webdriver.ChromeOptions()
+        #op.add_argument('headless') 
+        driver = webdriver.Chrome(options=op)
+        thf2 = pd.DataFrame()
+        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+        tickerest = ticker.split('.')[0]
+        if check_index == 'SET100':
+            driver.get('https://www.tradingview.com/symbols/SET-%s/financials-income-statement/'% tickerest)
+        else:
+            driver.get('https://www.tradingview.com/symbols/NASDAQ-%s/financials-income-statement/'% tickerest)
+        time.sleep(4)
+        year = driver.find_element("xpath",'//*[@id="FY"]')
+        year.click()
+        header = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[1]')
+        raw1 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[2]')
+        raw2 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[3]')
+        raw3 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[4]')
+        raw4 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[5]')
+        raw5 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[6]')
+        raw6 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[7]')
+        raw7 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[8]')
+        raw8 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[9]')
+        raw9 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[10]')
+        raw10 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[11]')
+        raw11 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[12]')
+        raw12 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[13]')
+        raw13 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[14]')
+        raw14 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[15]')
+        raw15 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[16]')
+        raw16 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[17]')
+        raw17 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[18]')
+        raw18 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[19]')
+        raw19 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[20]')
+        raw20 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[21]')
+        raw21 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[22]')
+        raw22 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[23]')
+        raw23 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[24]')
+        raw24 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[25]')
+        time.sleep(4)
+        Allelement = [raw1,raw2,raw3,raw4,raw5,raw6,raw7,raw8,raw9,raw10,
+                    raw11,raw12,raw13,raw14,raw15,raw16,raw17,raw18,raw19,raw20,
+                    raw21,raw22,raw23,raw24]
+
+        YoY = [''] * len(Allelement)
+        Oth = [''] * len(Allelement)
+        for element in header:
+            test.append(element.text)
+        year = test[0].split('\n')[1:-1]
+        for e in Allelement:
+            revenue = []
+            YoYR = []
+            test2 = []
+            for h in e:
+                test2.append(h.text)
+            test2 = test2[0].split('\n')
+            if (e == raw1) or (e == raw3) or (e == raw5) or (e == raw7) or (e == raw14) or (e == raw18) or (e == raw19) or (e == raw22) or (e == raw23):
+                for k in range(len(test2)-1):
+                    if k%2 == 0 and k > 0:
+                        YoYR.append(test2[k])
+                    else:
+                        if k > 0 :
+                            a = test2[k]
+                            revenue.append(a[1:-1])
+            else:
+                for k in range(len(test2)-2):
+                    a = test2[k+1]
+                    YoYR.append(None)
+                    revenue.append(a[1:-1])
+
+            YoY[count] = (YoYR)
+            Oth[count] = (revenue)
+            count += 1
+        a = range(len(Oth))
+        s = '2018'
+        for i in range(len(year)):
+            if year[i] == s:
+                year = year[i:]
+                break
+        for i in range(len(year)):
+            try:
+                data = {'Ticker':(ticker),'Total revenue':Oth[0][i],'YoY growth Total revenue':YoY[0][i],
+                    'Cost of goods sold':Oth[1][i],
+                    'Gross profit':Oth[2][i],'YoY growth Gross profit':YoY[2][i],
+                    'Operating expenses (excl. COGS)':Oth[3][i],
+                    'Operating income':Oth[4][i],'YoY growth Operating income' : YoY[4][i],
+                    'Non-operating income, total':Oth[5][i],
+                    'Pretax income':Oth[6][i],'YoY growth Pretax income':YoY[6][i],
+                    'Equity in earnings':Oth[7][i],'Taxes':Oth[8][i],
+                    'Non-controlling/minority interest':Oth[9][i],'After tax other income/expense':Oth[10][i],
+                    'Net income before discontinued operations':Oth[11][i],'Discontinued operations':Oth[12][i],
+                    'Net income':Oth[13][i],'YoY growth Net income':YoY[13][i],
+                    'Dilution adjustment':Oth[14][i],'Preferred dividends':Oth[15][i],'Diluted net income available to common stockholders':Oth[16][i],
+                    'Basic EPS':Oth[17][i],'YoY growth Basic EPS':YoY[17][i],'Diluted EPS':Oth[18][i],'Diluted EPS YoY growth':YoY[18][i],
+                    'Average basic shares outstanding':Oth[19][i],'Diluted shares outstanding':Oth[20][i],
+                    'EBITDA':Oth[21][i],'YoY growth EBITDA':YoY[21][i],'EBIT':Oth[22][i],'YoY growth EBIT': YoY[22][i],
+                    'Total operating expenses':Oth[23][i],'Year':year[i]}
+                thf = pd.DataFrame(data,index=[i])
+                thf2 = pd.concat([thf2,thf],ignore_index=True)
+            except:
+                print(i)
+                print('error here')
+        count = 0
+        year = []
+        if save == True:
+            thf2.to_sql('stock_financial',con=conn,if_exists='append',index=False)
+        return thf2
+
+    def download_quarter (self,ticker,save):
+        test = []
+        test2 = []
+        test3 = []
+        count = 0
+        revenue,YoYR = [],[]
+
+        # Create a SQL connection to our SQLite database
+        conn = sqlite3.connect("stock.sqlite")
+
+        op = webdriver.ChromeOptions()
+        #op.add_argument('headless') 
+        driver = webdriver.Chrome(options=op)
+        thf2 = pd.DataFrame()
+        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+        tickerest = ticker.split('.')[0]
+        if check_index == 'SET100':
+            driver.get('https://www.tradingview.com/symbols/SET-%s/financials-income-statement/'% tickerest)
+        else:
+            driver.get('https://www.tradingview.com/symbols/NASDAQ-%s/financials-income-statement/'% tickerest)
+
+        header = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[1]')
+        raw1 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[2]')
+        raw2 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[3]')
+        raw3 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[4]')
+        raw4 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[5]')
+        raw5 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[6]')
+        raw6 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[7]')
+        raw7 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[8]')
+        raw8 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[9]')
+        raw9 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[10]')
+        raw10 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[11]')
+        raw11 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[12]')
+        raw12 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[13]')
+        raw13 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[14]')
+        raw14 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[15]')
+        raw15 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[16]')
+        raw16 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[17]')
+        raw17 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[18]')
+        raw18 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[19]')
+        raw19 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[20]')
+        raw20 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[21]')
+        raw21 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[22]')
+        raw22 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[23]')
+        raw23 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[24]')
+        raw24 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[25]')
+        time.sleep(4)
+        Allelement = [raw1,raw2,raw3,raw4,raw5,raw6,raw7,raw8,raw9,raw10,
+                    raw11,raw12,raw13,raw14,raw15,raw16,raw17,raw18,raw19,raw20,
+                    raw21,raw22,raw23,raw24]
+
+        YoY = [''] * len(Allelement)
+        Oth = [''] * len(Allelement)
+        for element in header:
+            test.append(element.text)
+        year = test[0].split('\n')[1:-1]
+        for e in Allelement:
+            test2 = []
+            for h in e:
+                test2.append(h.text)
+            test2 = test2[0].split('\n')
+            if (e == raw1) or (e == raw3) or (e == raw5) or (e == raw7) or (e == raw14) or (e == raw18) or (e == raw19) or (e == raw22) or (e == raw23):
+                for k in range(len(test2)-3):
+                    if k%2 == 0:
+                        a = test2[k+2]
+                        revenue.append(a[1:-1])
+                    else:
+                        YoYR.append(test2[k+2])
+            else:
+                for k in range(len(test2)-2):
+                    a = test2[k+1]
+                    revenue.append(a[1:-1])
+                    YoYR.append(None)
+
+            YoY[count] = (YoYR)
+            Oth[count] = (revenue)
+            count += 1
+            YoYR = []
+            revenue = []
+
+        a = range(len(Oth))
+        for i in range(len(year)):
+            try:
+                data = {'Ticker':(ticker),'Total revenue':Oth[0][i],'YoY growth Total revenue':YoY[0][i],
+                    'Cost of goods sold':Oth[1][i],
+                    'Gross profit':Oth[2][i],'YoY growth Gross profit':YoY[2][i],
+                    'Operating expenses (excl. COGS)':Oth[3][i],
+                    'Operating income':Oth[4][i],'YoY growth Operating income' : YoY[4][i],
+                    'Non-operating income, total':Oth[5][i],
+                    'Pretax income':Oth[6][i],'YoY growth Pretax income':YoY[6][i],
+                    'Equity in earnings':Oth[7][i],'Taxes':Oth[8][i],
+                    'Non-controlling/minority interest':Oth[9][i],'After tax other income/expense':Oth[10][i],
+                    'Net income before discontinued operations':Oth[11][i],'Discontinued operations':Oth[12][i],
+                    'Net income':Oth[13][i],'YoY growth Net income':YoY[13][i],
+                    'Dilution adjustment':Oth[14][i],'Preferred dividends':Oth[15][i],'Diluted net income available to common stockholders':Oth[16][i],
+                    'Basic EPS':Oth[17][i],'YoY growth Basic EPS':YoY[17][i],'Diluted EPS':Oth[18][i],'Diluted EPS YoY growth':YoY[18][i],
+                    'Average basic shares outstanding':Oth[19][i],'Diluted shares outstanding':Oth[20][i],
+                    'EBITDA':Oth[21][i],'YoY growth EBITDA':YoY[21][i],'EBIT':Oth[22][i],'YoY growth EBIT': YoY[22][i],
+                    'Total operating expenses':Oth[23][i],'Quarterly':year[i]}
+                thf = pd.DataFrame(data,index=[i])
+                thf2 = pd.concat([thf2,thf],ignore_index=True)
+            except:
+                print(i)
+                print('error here')
+        count = 0
+        year = []
+        if save == True:
+            thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
+        return thf2
+    
+    def download_new_stock(self,Ticker):
+        a = download_info(Ticker)
+        b = download_stock(Ticker)
+        c = download_year(Ticker,True)
+        d = download_quarter(Ticker,True)
+        # e = news_one_Nasdaq(Ticker) # <---- ยังไม่ได้ลอง
+        # f = update_place(Ticker)  # <---- ยังไม่ได้ลอง
+        # g = download_place(Ticker) # <---- ยังไม่ได้ลอง
+
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
 
@@ -1167,7 +1450,7 @@ if __name__ == '__main__':
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-a = ML_stock()
+# a = ML_stock()
 # a.getLastDate('Hour','PTT.BK')
 # a.getDiffDay()
 # a.check_stock('PTT.BK')
@@ -1179,4 +1462,4 @@ a = ML_stock()
 # a.getLastDate(period)
 # a.getDiffDay()
 # print(a.update(ticker,period))
-a.news_one_Nasdaq('ABNB')
+# a.news_one_Nasdaq('ABNB')
