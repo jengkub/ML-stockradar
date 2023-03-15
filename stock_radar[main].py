@@ -1433,7 +1433,21 @@ class ML_stock:
         if save == True:
             thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return thf2
-    
+    def update_quarter (self,ticker):
+        thf2 = download_quarter(ticker,False)
+        a = len(thf2)
+        conn = sqlite3.connect("stock.sqlite")
+        count = 1
+        query = "SELECT Quarterly FROM stock_quarter WHERE `Ticker` == '%s'" % ('AAV.BK')
+        test = pd.read_sql(query, conn).values.tolist()[-1]
+        q = thf2['Quarterly']
+        for i in range(a):
+            if [list(thf2['Quarterly'].values)[i]] == test :
+                break
+            count += 1
+        data = thf2.iloc[count:,:]
+        data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
+        return data
     def download_new_stock(self,Ticker):
         a = download_info(Ticker)
         b = download_stock(Ticker)
