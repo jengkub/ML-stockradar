@@ -30,7 +30,7 @@ class TestMLStock(unittest.TestCase):
 
     @patch('sqlite3.connect')
     @patch('pandas.read_sql')
-    def test_getLastDate(self, mock_read_sql, mock_connect):
+    def test_getLastDate1(self, mock_read_sql, mock_connect):
         # Set up the mock cursor
         mock_cursor = mock_connect.return_value.cursor.return_value
 
@@ -47,6 +47,25 @@ class TestMLStock(unittest.TestCase):
         # Make assertions about the result
         self.assertEqual(result, ['2022', '01', '01'])
     
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_getLastDate2(self, mock_read_sql, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'ticker': ['ABC'], 'Datetime': [''], 'industryGroup': ['industry'], 'sector': ['sector']})
+        mock_read_sql.return_value = df
+
+        # Call the method being tested
+        result = self.stock.getLastDate('Hour','ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, False)
+
     @patch('datetime.datetime')
     def test_getDiffDay_sameDay(self, mock_datetime):
         #Set last date
@@ -77,6 +96,104 @@ class TestMLStock(unittest.TestCase):
 
         # assertions about the result
         self.assertEqual(result, 365)
+
+    @patch('datetime.datetime')
+    def test_getDiffDay_False(self, mock_datetime):
+        self.stock.LastDate = False  # Set the LastDate attribute to a known value
+        # Set date time
+        mock_now = mock_datetime.now.return_value
+        mock_now.year = 2023
+        mock_now.month = 1
+        mock_now.day = 1
+
+        # Call the method to tested
+        result = self.stock.getDiffDay()
+
+        # assertions about the result
+        self.assertEqual(result, False)
+    
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_check_stock1(self, mock_read_sql, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Index': ['NASDAQ100']})
+        mock_read_sql.return_value = df
+
+        self.stock.r_df = pd.DataFrame({'Datetime': ['2023-02-13 11:30:00']})
+        # Call the method being tested
+        result = self.stock.check_stock('ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, 4)
+
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_check_stock2(self, mock_read_sql, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+        self.stock.DiffDay = 5
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Index': ['NASDAQ100']})
+        mock_read_sql.return_value = df
+
+        self.stock.r_df = pd.DataFrame({'Datetime': ['2023-02-13 10:30:00']})
+        # Call the method being tested
+        result = self.stock.check_stock('ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, 5)
+        self.assertEqual(self.stock.DiffDay, '5d')
+    
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_check_stock3(self, mock_read_sql, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+        self.stock.DiffDay = 2
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Index': ['SET100']})
+        mock_read_sql.return_value = df
+
+        self.stock.r_df = pd.DataFrame({'Datetime': ['2023-02-13 10:00:00']})
+        # Call the method being tested
+        result = self.stock.check_stock('ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, 5)
+        self.assertEqual(self.stock.DiffDay, '2d')
+
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_check_stock4(self, mock_read_sql, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+        self.stock.DiffDay = 19
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'Index': ['CRYPTO100']})
+        mock_read_sql.return_value = df
+
+        self.stock.r_df = pd.DataFrame({'Datetime': ['2023-02-13 19:00:00']})
+        # Call the method being tested
+        result = self.stock.check_stock('ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, 4)
+        self.assertEqual(self.stock.DiffDay, '20d')
 
     @patch('yfinance.download')
     @patch('sqlite3.connect')
@@ -490,14 +607,21 @@ class ML_stock:
         elif period == 'Day':query = "SELECT * FROM stock_table_d WHERE `ticker` = '%s'" % ticker
         elif period == 'Month':query = "SELECT * FROM stock_table_mo WHERE `ticker` = '%s'" % ticker
         self.r_df = pd.read_sql(query, conn)
+        if self.r_df.tail(1).Datetime.to_string().split() == []:
+            return False
         # Cut data to get only datatime
         last = self.r_df.tail(1).Datetime.to_string().split()
-        self.LastDate = last[1].split()[0].split('-')
+        try:
+            self.LastDate = last[1].split()[0].split('-')
+        except:
+            return False
         return self.LastDate
 
     def getDiffDay(self):
         # Get datetime for now
         x = datetime.datetime.now()
+        if self.LastDate == False:
+            return False
         count = 0
         DayM = 0
         DayMo365 = {'1':31,'2':28,'3':31,'4':30,'5':31,'6':30,'7':31,'8':31,'9':30,'10':31,'11':30,'12':31}
