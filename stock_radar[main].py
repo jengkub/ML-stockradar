@@ -833,7 +833,7 @@ class ML_stock:
             all_link.append(href)
         return all_link
 
-    #scrap news from website
+        #scrap news from website
     def scrap_news_SET(self, link ,stock):
         all_link = self.find_link(link)
 
@@ -861,12 +861,12 @@ class ML_stock:
 
                 for ticker in tag:
                     if ticker.text in stock:
-                        self.news =  self.load_data_news(date_obj, title.text, get_url, ticker.text)
+                        ticker = ticker.text + '.BK'
+                        self.news =  self.load_data_news(date_obj, title.text, get_url, ticker)
                         print(self.news)
                         if self.news != []:
-                                return False
+                            return False
                         else:
-                            ticker = ticker.text + '.BK'
                             df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title.text], 'Link':[get_url], 'Body':[body], 'Ticker':[ticker]})
                             print(df)
                             self.save_data_news(df)                
@@ -893,14 +893,58 @@ class ML_stock:
         work = True
         while work == True:
             try:
-                self.scrap_news_SET('https://www.kaohoon.com/latest-news', self.stock)
+                re = self.scrap_news_SET('https://www.kaohoon.com/latest-news', self.stock)
                 re = self.next_page_scrap(self.stock)
-                if re == 'Stop':
+                if re == 'Stop' or re == False:
                     work = False
             except Exception as e: 
                 print(e)
         return True
     
+    #scrap news from API
+    def news_one_Nasdaq(self,ticker):
+        con = sqlite3.connect("stock.sqlite")
+        cur = con.cursor()
+        try:
+            if ticker in self.list_nasdaq():
+                url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers='+ ticker +'&limit=200&apikey=8X8QE27D001F3TV'
+                r = requests.get(url)
+                data = r.json()
+                round = int(data['items'])
+                for j in range(round):
+                    print(j)
+                    title = data['feed'][j]['title']
+                    date = data['feed'][j]['time_published']
+                    get_url = data['feed'][j]['url']
+                    body = data['feed'][j]['summary']
+
+                    date = date.split("T")
+                    date = date[0]
+                    year = date[:4]
+                    mo = date[4:6]
+                    day = date[6:]
+
+                    date = [year,mo,day]
+                    date = "-".join(date)
+                    date_format = "%Y-%m-%d"
+                    date_obj = datetime.strptime(date, date_format)
+
+                    query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?"
+                    cur.execute(query, (date_obj, title, get_url, ticker))
+                    news = cur.fetchall()
+                    print(news)
+                    if news != []:
+                        break
+                    else:
+                        df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title], 'Link':[get_url], 'Body':[body], 'Ticker':[ticker]})
+                        print(df)
+                        self.save_data_news(df)
+                return True
+            else:
+                return False
+        except:
+            return False
+
     #scrap news from API
     def news_Nasdaq(self,interger):
         con = sqlite3.connect("stock.sqlite")
@@ -945,12 +989,54 @@ class ML_stock:
             self.news_Nasdaq(ind)
 
     #scrap news from API
+    def news_one_Crypto(self, ticker):
+        con = sqlite3.connect("stock.sqlite")
+        cur = con.cursor()
+        try:
+            if ticker in self.list_crypto():
+                # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
+                url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&blockchain='+ ticker +'&limit=200&apikey=8X8QE27D001F3TV'
+                r = requests.get(url)
+                data = r.json()
+                round = int(data['items'])
+                for j in range(round):
+                    title = data['feed'][j]['title']
+                    date = data['feed'][j]['time_published']
+                    get_url = data['feed'][j]['url']
+                    body = data['feed'][j]['summary']
+                    date = date.split("T")
+                    date = date[0]
+                    year = date[:4]
+                    mo = date[4:6]
+                    day = date[6:]
+                    date = [year,mo,day]
+                    date = "-".join(date)
+                    date_format = "%Y-%m-%d"
+                    date_obj = datetime.strptime(date, date_format)
+
+                    query = "SELECT * FROM stock_news WHERE DATETIME = ? AND Title = ? AND Link = ? AND Ticker = ?"
+                    cur.execute(query, (date_obj, title, get_url, ticker))
+                    news = cur.fetchall()
+                    print(news)
+                    if news != []:
+                        break
+                    else:
+                        df = pd.DataFrame({'Datetime': [date_obj], 'Title':[title], 'Link':[get_url], 'Body':[body], 'Ticker':[ticker]})
+                        print(df)
+                        self.save_data_news(df)
+                return True
+            else:
+                return False
+        
+        except:
+            return False
+
+    #scrap news from API
     def news_Crypto(self, interger):
         con = sqlite3.connect("stock.sqlite")
         cur = con.cursor()
         try:
             for i in self.stock[interger:]:
-                print(i)
                 ind = self.stock.index(i)
                 cryp = i.split('-')
                 cryp = cryp[0]
@@ -960,7 +1046,6 @@ class ML_stock:
                 data = r.json()
                 round = int(data['items'])
                 for j in range(round):
-                    print(j)
                     title = data['feed'][j]['title']
                     date = data['feed'][j]['time_published']
                     get_url = data['feed'][j]['url']
@@ -1059,21 +1144,21 @@ class ML_stock:
                 pass
         return data_thai
     
-    def update_place(self,ticker):
-        conn = sqlite3.connect("stock.sqlite")
-        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
-        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
-        query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
-        check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
-        query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
-        get_news = pd.read_sql(query_news, conn)
-        if check_index == 'SET100':
-            eng = self.trans_set100(get_news)
-            place = self.get_latlong_for_all_content(eng)
-        else:
-            place = self.get_latlong_for_all_content(get_news)
-        place.to_sql('stock_city',con=conn,if_exists='append',index=False)
-        return place
+    # def update_place(self,ticker):
+    #     conn = sqlite3.connect("stock.sqlite")
+    #     query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+    #     check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+    #     query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
+    #     check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
+    #     query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
+    #     get_news = pd.read_sql(query_news, conn)
+    #     if check_index == 'SET100':
+    #         eng = self.trans_set100(get_news)
+    #         place = self.get_latlong_for_all_content(eng)
+    #     else:
+    #         place = self.get_latlong_for_all_content(get_news)
+    #     place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+    #     return place
     
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
@@ -1082,7 +1167,7 @@ if __name__ == '__main__':
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-# a = ML_stock()
+a = ML_stock()
 # a.getLastDate('Hour','PTT.BK')
 # a.getDiffDay()
 # a.check_stock('PTT.BK')
@@ -1094,3 +1179,4 @@ if __name__ == '__main__':
 # a.getLastDate(period)
 # a.getDiffDay()
 # print(a.update(ticker,period))
+a.news_one_Nasdaq('ABNB')
