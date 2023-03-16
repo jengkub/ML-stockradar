@@ -23,6 +23,9 @@ import locationtagger
 from geopy.geocoders import Nominatim
 import translators as ts
 import translators.server as tss
+from selenium import webdriver
+from selenium.webdriver.common.by import By 
+import time
 
 class TestMLStock(unittest.TestCase):
     def setUp(self):
@@ -737,6 +740,7 @@ class ML_stock:
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         elif period == 'Day':data.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
         elif period == 'Month':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
+
     def getAllticker(self):
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
@@ -1434,7 +1438,7 @@ class ML_stock:
             thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return thf2
     def update_quarter (self,ticker):
-        thf2 = download_quarter(ticker,False)
+        thf2 = self.download_quarter(ticker,False)
         a = len(thf2)
         conn = sqlite3.connect("stock.sqlite")
         count = 1
@@ -1449,23 +1453,54 @@ class ML_stock:
         data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return data
     def download_new_stock(self,Ticker):
-        a = download_info(Ticker)
-        b = download_stock(Ticker)
-        c = download_year(Ticker,True)
-        d = download_quarter(Ticker,True)
+        a = self.download_info(Ticker)
+        b = self.download_stock(Ticker)
+        c = self.download_year(Ticker,True)
+        d = self.download_quarter(Ticker,True)
         # e = news_one_Nasdaq(Ticker) # <---- ยังไม่ได้ลอง
         # f = update_place(Ticker)  # <---- ยังไม่ได้ลอง
         # g = download_place(Ticker) # <---- ยังไม่ได้ลอง
+    
+    def change_stock(self,Ticker,period):
+        conn = sqlite3.connect("stock.sqlite")
+        if period == 'Hour':
+            query = "SELECT Datetime,Open,Close FROM stock_table_hr WHERE [Ticker] = '%s'" % Ticker
+        elif period == 'Day':
+            query = "SELECT Datetime,Open,Close FROM stock_table_d WHERE [Ticker] = '%s'" % Ticker
+        elif period == 'Month':
+            query = "SELECT Datetime,Open,Close FROM stock_table_mo WHERE [Ticker] = '%s'" % Ticker
+        else:
+            return False
+        stock = pd.read_sql(query,conn)
+        try:
+            Open = stock.tail(1)['Open'].values.tolist()[0]
+            Close = stock.tail(1)['Close'].values.tolist()[0]
+        except:
+            return False
+        Diff = pd.DataFrame({'Ticker': [Ticker],'Diff':[int((Close-Open)*100)/100], 'Ratio': [str(int(((Close-Open)/Close)*10000)/100) + '%']})
+        return Diff
 
-if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    def All_change_stock(self,period):
+        Ticker = self.getAllticker()
+        df2 = pd.DataFrame()
+        for i in Ticker:
+            df = self.change_stock(i,period)
+            if (df.bool()):
+                return False
+            else:
+                df2 = pd.concat([df2,df],ignore_index=True)
+        return df2
 
-# ticker = 'AOT.BK'
+# if __name__ == '__main__':
+#     unittest.main(argv=['first-arg-is-ignored'], exit=False)
+
+ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-# a = ML_stock()
-# a.getLastDate('Hour','PTT.BK')
+a = ML_stock()
+print(a.All_change_stock('Day'))
+# a.getLastDate('Hour','PTT.BK') 
 # a.getDiffDay()
 # a.check_stock('PTT.BK')
 # a.update('Hour','PTT.BK')
