@@ -717,12 +717,12 @@ class ML_stock:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
                     if period == 'Month':
-                        if i == int(LastDate[2])+1 or i == int(LastDate[2])+2 or i == int(LastDate[2])+3 or i == int(LastDate[2]):
-                            if str(data.index.values[0]).split('T')[0] == r_df.tail(1)['Datetime'].values[0].split(' ')[0]:
+                        if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3 or i == int(self.LastDate[2]):
+                            if str(data.index.values[0]).split('T')[0] == self.r_df.tail(1)['Datetime'].values[0].split(' ')[0]:
                                 count += 1
                             break
                     else:
-                        if i == int(LastDate[2])+1 or i == int(LastDate[2])+2 or i == int(LastDate[2])+3 or i == int(LastDate[2]):
+                        if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3 or i == int(self.LastDate[2]):
                             count += 1
                             break
             count += 1
