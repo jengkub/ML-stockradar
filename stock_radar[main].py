@@ -660,48 +660,48 @@ class ML_stock:
         ok = self.r_df.tail(1).Datetime.to_string().split()[2]
         #for get extra time in database
         if for_ind['Index'].values == 'NASDAQ100':
-            self.DiffDay = str(self.DiffDay)+'d'
-            if ok == '09:30:00':down = 6
-            elif ok == '10:30:00':down = 5
-            elif ok == '11:30:00':down = 4
+            self.DiffDay = str(self.DiffDay+2)+'d'
+            if ok == '09:30:00':down = 0
+            elif ok == '10:30:00':down = 1
+            elif ok == '11:30:00':down = 2
             elif ok == '12:30:00':down = 3
-            elif ok == '13:30:00':down = 2
-            elif ok == '14:30:00':down = 1
-            elif ok == '15:30:00':down = 0
+            elif ok == '13:30:00':down = 4
+            elif ok == '14:30:00':down = 5
+            elif ok == '15:30:00':down = 6
         elif for_ind['Index'].values == 'SET100':
-            self.DiffDay = str(self.DiffDay)+'d'
-            if ok == '10:00:00':down = 5
-            elif ok == '11:00:00':down = 4
-            elif ok == '12:00:00':down = 3
-            elif ok == '14:00:00':down = 2
-            elif ok == '15:00:00':down = 1
-            elif ok == '16:00:00':down = 0
-        elif for_ind['Index'].values == 'CRYPTO100':
             self.DiffDay = str(self.DiffDay+1)+'d'
-            if ok == '00:00:00':down = 23
-            elif ok == '01:00:00':down = 22
-            elif ok == '02:00:00':down = 21
-            elif ok == '03:00:00':down = 20
-            elif ok == '04:00:00':down = 19
-            elif ok == '05:00:00':down = 18
-            elif ok == '06:00:00':down = 17
-            elif ok == '07:00:00':down = 16
-            elif ok == '08:00:00':down = 15
-            elif ok == '09:00:00':down = 14
-            elif ok == '10:00:00':down = 13
-            elif ok == '11:00:00':down = 12
-            elif ok == '12:00:00':down = 11
-            elif ok == '13:00:00':down = 10
-            elif ok == '14:00:00':down = 9
-            elif ok == '15:00:00':down = 8
-            elif ok == '16:00:00':down = 7
-            elif ok == '17:00:00':down = 6
-            elif ok == '18:00:00':down = 5
-            elif ok == '19:00:00':down = 4
-            elif ok == '20:00:00':down = 3
-            elif ok == '21:00:00':down = 2
-            elif ok == '22:00:00':down = 1
-            elif ok == '23:00:00':down = 0
+            if ok == '10:00:00':down = 0
+            elif ok == '11:00:00':down = 1
+            elif ok == '12:00:00':down = 2
+            elif ok == '14:00:00':down = 3
+            elif ok == '15:00:00':down = 4
+            elif ok == '16:00:00':down = 5
+        elif for_ind['Index'].values == 'CRYPTO100':
+            self.DiffDay = str(self.DiffDay+2)+'d'
+            if ok == '00:00:00':down = 0
+            elif ok == '01:00:00':down = 1
+            elif ok == '02:00:00':down = 2
+            elif ok == '03:00:00':down = 3
+            elif ok == '04:00:00':down = 4
+            elif ok == '05:00:00':down = 5
+            elif ok == '06:00:00':down = 6
+            elif ok == '07:00:00':down = 7
+            elif ok == '08:00:00':down = 8
+            elif ok == '09:00:00':down = 9
+            elif ok == '10:00:00':down = 10
+            elif ok == '11:00:00':down = 11
+            elif ok == '12:00:00':down = 12
+            elif ok == '13:00:00':down = 13
+            elif ok == '14:00:00':down = 14
+            elif ok == '15:00:00':down = 15
+            elif ok == '16:00:00':down = 16
+            elif ok == '17:00:00':down = 17
+            elif ok == '18:00:00':down = 18
+            elif ok == '19:00:00':down = 19
+            elif ok == '20:00:00':down = 20
+            elif ok == '21:00:00':down = 21
+            elif ok == '22:00:00':down = 22
+            elif ok == '23:00:00':down = 23
         self.down = down
         return self.down
     
@@ -717,15 +717,18 @@ class ML_stock:
             if data.index.year[count] == int(self.LastDate[0]):
                 if data.index.month[count] == int(self.LastDate[1]):
                     if period == 'Month':
-                        if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3 or i == int(self.LastDate[2]):
+                        if i == int(LastDate[2])+1 or i == int(LastDate[2])+2 or i == int(LastDate[2])+3 or i == int(LastDate[2]):
+                            if str(data.index.values[0]).split('T')[0] == r_df.tail(1)['Datetime'].values[0].split(' ')[0]:
+                                count += 1
                             break
                     else:
-                        if i == int(self.LastDate[2])+1 or i == int(self.LastDate[2])+2 or i == int(self.LastDate[2])+3:
+                        if i == int(LastDate[2])+1 or i == int(LastDate[2])+2 or i == int(LastDate[2])+3 or i == int(LastDate[2]):
+                            count += 1
                             break
             count += 1
         # Cut extra stock off
         if count != len(data):
-            count = count - self.down
+            count = count + self.down
         data['ticker'] = ticker
         data = data.iloc[count:,:]
         data.index.names = ['Datetime']
@@ -1122,11 +1125,11 @@ class ML_stock:
     def updateAll(self):
         period = ['Hour','Day','Month']
         Ticker = self.getAllticker()
-        self.News_SET100()
-        self.news_Nasdaq(0)
-        self.news_Crypto(0)
+        # self.News_SET100()
+        # self.news_Nasdaq(0)
+        # self.news_Crypto(0)
         for  i in Ticker:
-            self.update_place(i)
+            # self.update_place(i)
             try:
                 for j in period:
                     self.getLastDate(j,i)
@@ -1220,7 +1223,7 @@ class ML_stock:
         conn = sqlite3.connect("stock.sqlite")
 
         op = webdriver.ChromeOptions()
-        #op.add_argument('headless') 
+        op.add_argument('headless')
         driver = webdriver.Chrome(options=op)
         thf2 = pd.DataFrame()
         query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
@@ -1338,7 +1341,7 @@ class ML_stock:
         conn = sqlite3.connect("stock.sqlite")
 
         op = webdriver.ChromeOptions()
-        #op.add_argument('headless') 
+        op.add_argument('headless')
         driver = webdriver.Chrome(options=op)
         thf2 = pd.DataFrame()
         query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
@@ -1437,6 +1440,7 @@ class ML_stock:
         if save == True:
             thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return thf2
+    
     def update_quarter (self,ticker):
         thf2 = self.download_quarter(ticker,False)
         a = len(thf2)
@@ -1452,13 +1456,13 @@ class ML_stock:
         data = thf2.iloc[count:,:]
         data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return data
+    
     def download_new_stock(self,Ticker):
         a = self.download_info(Ticker)
         b = self.download_stock(Ticker)
         c = self.download_year(Ticker,True)
         d = self.download_quarter(Ticker,True)
         # e = news_one_Nasdaq(Ticker) # <---- ยังไม่ได้ลอง
-        # f = update_place(Ticker)  # <---- ยังไม่ได้ลอง
         # g = download_place(Ticker) # <---- ยังไม่ได้ลอง
     
     def change_stock(self,Ticker,period):
@@ -1499,14 +1503,15 @@ ticker = 'AOT.BK'
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
 a = ML_stock()
-print(a.All_change_stock('Day'))
+# a.download_new_stock('META')
+# print(a.All_change_stock('Day'))
 # a.getLastDate('Hour','PTT.BK') 
 # a.getDiffDay()
 # a.check_stock('PTT.BK')
 # a.update('Hour','PTT.BK')
 # print('here')
 # print(a.getcity_and_latlong(text))
-# a.updateAll()
+a.updateAll()
 # print(a.get_poppulate_for_city())
 # a.getLastDate(period)
 # a.getDiffDay()
