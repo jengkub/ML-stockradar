@@ -1446,7 +1446,7 @@ class ML_stock:
         a = len(thf2)
         conn = sqlite3.connect("stock.sqlite")
         count = 1
-        query = "SELECT Quarterly FROM stock_quarter WHERE `Ticker` == '%s'" % ('AAV.BK')
+        query = "SELECT Quarterly FROM stock_quarter WHERE `Ticker` == '%s'" % ticker
         test = pd.read_sql(query, conn).values.tolist()[-1]
         q = thf2['Quarterly']
         for i in range(a):
@@ -1457,6 +1457,22 @@ class ML_stock:
         data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return data
     
+    def update_year (self,ticker):
+        thf2 = self.download_year(ticker,False)
+        a = len(thf2)
+        conn = sqlite3.connect("stock.sqlite")
+        count = 1
+        query = "SELECT Year FROM stock_financial WHERE `Ticker` == '%s'" % ticker
+        test = pd.read_sql(query, conn).values.tolist()[-1]
+        q = thf2['Year']
+        for i in range(a):
+            if [list(thf2['Year'].values)[i]] == test :
+                break
+            count += 1
+        data = thf2.iloc[count:,:]
+        data.to_sql('stock_financial',con=conn,if_exists='append',index=False)
+        return data
+
     def download_new_stock(self,Ticker):
         a = self.download_info(Ticker)
         b = self.download_stock(Ticker)
