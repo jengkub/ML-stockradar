@@ -125,7 +125,7 @@ class TestMLStock(unittest.TestCase):
         mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
 
         # Set up the mock DataFrame
-        df = pd.DataFrame({'Index': ['NASDAQ100']})
+        df = pd.DataFrame({'Index': ['NASDAQ']})
         mock_read_sql.return_value = df
 
         self.stock.r_df = pd.DataFrame({'Datetime': ['2023-02-13 11:30:00']})
@@ -145,7 +145,7 @@ class TestMLStock(unittest.TestCase):
         mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
 
         # Set up the mock DataFrame
-        df = pd.DataFrame({'Index': ['NASDAQ100']})
+        df = pd.DataFrame({'Index': ['NASDAQ']})
         mock_read_sql.return_value = df
 
         self.stock.r_df = pd.DataFrame({'Datetime': ['2023-02-13 10:30:00']})
@@ -659,7 +659,7 @@ class ML_stock:
         for_ind = pd.read_sql(query, conn)
         ok = self.r_df.tail(1).Datetime.to_string().split()[2]
         #for get extra time in database
-        if for_ind['Index'].values == 'NASDAQ100':
+        if for_ind['Index'].values == 'NASDAQ':
             self.DiffDay = str(self.DiffDay+2)+'d'
             if ok == '09:30:00':down = 0
             elif ok == '10:30:00':down = 1
@@ -785,12 +785,12 @@ class ML_stock:
             self.stock.append(temp[0])
         return self.stock
     
-    #return all stock in NASDAQ100 
+    #return all stock in NASDAQ 
     def list_nasdaq(self):
         self.stock = []
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
-        query = "select Ticker from stock_info where `Index` == 'NASDAQ100'"
+        query = "select Ticker from stock_info where `Index` == 'NASDAQ'"
         stock = pd.read_sql(query,conn)
         self.stock = list(stock['Ticker'])
         return self.stock
@@ -1193,7 +1193,7 @@ class ML_stock:
         numlink = driver.find_elements(By.XPATH, '//span[@class="Fw(600)"]')
         for i in numlink[:2]:
             InsSec.append(i.text)
-        df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['NASDAQ100']})
+        df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['NASDAQ']})
         df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
         return df1
 
