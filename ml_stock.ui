@@ -209,7 +209,7 @@ QPushButton:pressed {
          </rect>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="page">
          <widget class="QGraphicsView" name="graphicsView_2">
@@ -249,7 +249,7 @@ QPushButton:pressed {
            <property name="geometry">
             <rect>
              <x>370</x>
-             <y>250</y>
+             <y>150</y>
              <width>141</width>
              <height>61</height>
             </rect>
@@ -265,8 +265,8 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
           <widget class="QPushButton" name="pushButton_6">
            <property name="geometry">
             <rect>
-             <x>400</x>
-             <y>380</y>
+             <x>390</x>
+             <y>460</y>
              <width>75</width>
              <height>23</height>
             </rect>
@@ -278,6 +278,90 @@ color: rgb(255, 255, 255);</string>
            </property>
            <property name="text">
             <string>Update</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_1">
+           <property name="geometry">
+            <rect>
+             <x>400</x>
+             <y>260</y>
+             <width>70</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Ticker</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_2">
+           <property name="geometry">
+            <rect>
+             <x>400</x>
+             <y>350</y>
+             <width>70</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Finacial</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_3">
+           <property name="geometry">
+            <rect>
+             <x>400</x>
+             <y>380</y>
+             <width>70</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>News</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_4">
+           <property name="geometry">
+            <rect>
+             <x>400</x>
+             <y>410</y>
+             <width>70</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Location</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_3">
+           <property name="geometry">
+            <rect>
+             <x>350</x>
+             <y>220</y>
+             <width>171</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="layoutDirection">
+            <enum>Qt::LeftToRight</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);
+font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+           </property>
+           <property name="text">
+            <string>Select update</string>
            </property>
           </widget>
          </widget>
