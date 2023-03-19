@@ -26,6 +26,8 @@ import translators.server as tss
 from selenium import webdriver
 from selenium.webdriver.common.by import By 
 import time
+import pandas_datareader as pdr
+import ccxt
 
 class TestMLStock(unittest.TestCase):
     def setUp(self):
@@ -1183,7 +1185,11 @@ class ML_stock:
 
     def download_info(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
-        all_link = []
+        exchange = ccxt.binance()
+        markets = exchange.load_markets()
+        usd_markets = [market for market in markets if market.endswith('/USDT')]
+        crypto_tickers = [market.replace('/','-').replace('USDT','USD') for market in usd_markets]
+        nasdaq_tickers = pdr.nasdaq_trader.get_nasdaq_symbols().index.tolist()
         op = webdriver.ChromeOptions()
         op.add_argument('headless') 
         driver = webdriver.Chrome(options=op)
@@ -1193,9 +1199,18 @@ class ML_stock:
         numlink = driver.find_elements(By.XPATH, '//span[@class="Fw(600)"]')
         for i in numlink[:2]:
             InsSec.append(i.text)
-        df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['NASDAQ']})
-        df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
-        return df1
+        try:
+            if Ticker in nasdaq_tickers:
+                df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['NASDAQ']})
+                df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
+                return df1
+            elif Ticker in crypto_tickers:
+                df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['CRYPTO100']})
+                df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
+                return df1
+        except:
+            pass
+        return False
 
     def download_stock(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
@@ -1475,6 +1490,8 @@ class ML_stock:
 
     def download_new_stock(self,Ticker):
         a = self.download_info(Ticker)
+        if a == False:
+            return False
         b = self.download_stock(Ticker)
         c = self.download_year(Ticker,True)
         d = self.download_quarter(Ticker,True)
