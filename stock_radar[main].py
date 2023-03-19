@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal
 # from jupyter_dash import JupyterDash
 from dash import Dash, html, dcc, Input, Output, callback , State, ctx, dash_table
 import dateutil.relativedelta
+import datetime as dt
 from datetime import date
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -624,7 +625,7 @@ class ML_stock:
 
     def getDiffDay(self):
         # Get datetime for now
-        x = datetime.datetime.now()
+        x = dt.datetime.now()
         if self.LastDate == False:
             return False
         count = 0
@@ -774,6 +775,15 @@ class ML_stock:
         except:
             return False
 
+    #return all stock    
+    def stock_name(self):
+        conn = sqlite3.connect("stock.sqlite")
+        cur = conn.cursor()
+        query = "select Ticker from stock_info"
+        r_df = pd.read_sql(query,conn)
+        list_db = r_df['Ticker'].values.tolist()
+        return list_db
+
     #return all stock in SET100    
     def list_set(self):
         self.stock = []
@@ -787,7 +797,7 @@ class ML_stock:
             self.stock.append(temp[0])
         return self.stock
     
-    #return all stock in NASDAQ 
+    #return all stock in NASDAQ
     def list_nasdaq(self):
         self.stock = []
         conn = sqlite3.connect("stock.sqlite")
@@ -842,7 +852,7 @@ class ML_stock:
             all_link.append(href)
         return all_link
 
-        #scrap news from website
+    #scrap news from website
     def scrap_news_SET(self, link ,stock):
         all_link = self.find_link(link)
 
@@ -910,6 +920,7 @@ class ML_stock:
                 print(e)
         return True
     
+    #scrap news from API
     #scrap news from API
     def news_one_Nasdaq(self,ticker):
         con = sqlite3.connect("stock.sqlite")
@@ -1227,7 +1238,7 @@ class ML_stock:
         df_d.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
         df_mo.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
 
-    def download_year (self,ticker,save):
+    def download_year(self,ticker,save):
         test = []
         test2 = []
         test3 = []
@@ -1345,7 +1356,7 @@ class ML_stock:
             thf2.to_sql('stock_financial',con=conn,if_exists='append',index=False)
         return thf2
 
-    def download_quarter (self,ticker,save):
+    def download_quarter(self,ticker,save):
         test = []
         test2 = []
         test3 = []
@@ -1456,7 +1467,7 @@ class ML_stock:
             thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return thf2
     
-    def update_quarter (self,ticker):
+    def update_quarter(self,ticker):
         thf2 = self.download_quarter(ticker,False)
         a = len(thf2)
         conn = sqlite3.connect("stock.sqlite")
@@ -1472,7 +1483,7 @@ class ML_stock:
         data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return data
     
-    def update_year (self,ticker):
+    def update_year(self,ticker):
         thf2 = self.download_year(ticker,False)
         a = len(thf2)
         conn = sqlite3.connect("stock.sqlite")
