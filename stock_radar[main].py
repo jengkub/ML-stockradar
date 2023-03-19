@@ -844,6 +844,7 @@ class ML_stock:
         elif period == 'Month':data.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
         return data
 
+    ##No test
     def savetoDB(self,period,data):
         conn = sqlite3.connect("stock.sqlite")
         if period == 'Hour':data.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
@@ -878,6 +879,7 @@ class ML_stock:
         except:
             return False
 
+    ##No test
     #return all stock    
     def stock_name(self):
         conn = sqlite3.connect("stock.sqlite")
@@ -1023,6 +1025,7 @@ class ML_stock:
                 print(e)
         return True
     
+    ##No test
     #scrap news from API
     #scrap news from API
     def news_one_Nasdaq(self,ticker):
@@ -1068,15 +1071,7 @@ class ML_stock:
         except:
             return False
         
-    def list_nasdaq(self):
-        self.stock = []
-        conn = sqlite3.connect("stock.sqlite")
-        cur = conn.cursor()
-        query = "select Ticker from stock_info where `Index` == 'NASDAQ'"
-        stock = pd.read_sql(query,conn)
-        self.stock = list(stock['Ticker'])
-        return self.stock
-    
+    ##No test
     def D_news_one_Nasdaq(self,ticker):
         try:
             url = 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers='+ ticker +'&limit=200&apikey=8X8QE27D001F3TV'
@@ -1149,6 +1144,7 @@ class ML_stock:
         except: 
             self.news_Nasdaq(ind)
 
+    ##No test
     #scrap news from API
     def news_one_Crypto(self, ticker):
         con = sqlite3.connect("stock.sqlite")
@@ -1235,6 +1231,7 @@ class ML_stock:
         except : 
             self.news_Crypto(ind)
 
+    ##No test
     def get_news_content(self):
         conn = sqlite3.connect("stock.sqlite")
         cur = conn.cursor()
@@ -1245,7 +1242,8 @@ class ML_stock:
             news = pd.read_sql(query2, conn)
             if not(news.empty):
                 self.content_news = pd.concat([self.content_news,news],ignore_index=True)
-    
+
+
     def getcity_and_latlong(self,text):
         # extracting entities.
         place_entity = locationtagger.find_locations(text = text)
@@ -1276,6 +1274,8 @@ class ML_stock:
         self.add.rename(columns={'size': 'population'}, inplace=True)
         return self.add
 
+    #No test
+    #Not finish
     def updateAll(self):
         period = ['Hour','Day','Month']
         Ticker = self.getAllticker()
@@ -1305,6 +1305,7 @@ class ML_stock:
                 pass
         return data_thai
     
+    ##No test
     def download_place(self,ticker):
         conn = sqlite3.connect("stock.sqlite")
         query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
@@ -1335,6 +1336,7 @@ class ML_stock:
         place.to_sql('stock_city',con=conn,if_exists='append',index=False)
         return place
 
+    ##No test
     def download_info(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
         exchange = ccxt.binance()
@@ -1364,6 +1366,7 @@ class ML_stock:
             pass
         return df2
 
+    ##No test
     def download_stock(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
         df_h = yf.download(tickers=Ticker, period='2y', interval='1h')
@@ -1379,6 +1382,7 @@ class ML_stock:
         df_d.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
         df_mo.to_sql('stock_table_mo',con=conn,if_exists='append',index=True)
 
+    ##No test
     def download_year(self,ticker,save):
         test = []
         test2 = []
@@ -1497,6 +1501,7 @@ class ML_stock:
             thf2.to_sql('stock_financial',con=conn,if_exists='append',index=False)
         return thf2
 
+    ##No test
     def download_quarter(self,ticker,save):
         test = []
         test2 = []
@@ -1608,6 +1613,7 @@ class ML_stock:
             thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return thf2
     
+    ##No test
     def update_quarter(self,ticker):
         thf2 = self.download_quarter(ticker,False)
         a = len(thf2)
@@ -1624,6 +1630,7 @@ class ML_stock:
         data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return data
     
+    ##No test
     def update_year(self,ticker):
         thf2 = self.download_year(ticker,False)
         a = len(thf2)
@@ -1640,6 +1647,7 @@ class ML_stock:
         data.to_sql('stock_financial',con=conn,if_exists='append',index=False)
         return data
 
+    ##No test
     def download_new_stock(self,Ticker):
         a = self.download_info(Ticker)
         if a.empty:
@@ -1650,6 +1658,7 @@ class ML_stock:
         e = self.D_news_one_Nasdaq(Ticker) # <---- ยังไม่ได้ลอง
         g = self.download_place(Ticker) # <---- ยังไม่ได้ลอง
     
+    ##No test
     def change_stock(self,Ticker,period):
         conn = sqlite3.connect("stock.sqlite")
         if period == 'Hour':
@@ -1669,6 +1678,7 @@ class ML_stock:
         Diff = pd.DataFrame({'Ticker': [Ticker],'Diff':[int((Close-Open)*100)/100], 'Ratio': [str(int(((Close-Open)/Close)*10000)/100) + '%']})
         return Diff
 
+    ##No test
     def All_change_stock(self,period):
         Ticker = self.getAllticker()
         df2 = pd.DataFrame()
