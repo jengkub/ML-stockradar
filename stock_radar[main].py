@@ -11,7 +11,6 @@ from dash import Dash, html, dcc, Input, Output, callback , State, ctx, dash_tab
 import dateutil.relativedelta
 import datetime as dt
 from datetime import date
-from datetime import datetime
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import sys
@@ -122,6 +121,7 @@ class TestMLStock(unittest.TestCase):
     @patch('sqlite3.connect')
     @patch('pandas.read_sql')
     def test_check_stock1(self, mock_read_sql, mock_connect):
+        self.stock.DiffDay = 1
         # Set up the mock cursor
         mock_cursor = mock_connect.return_value.cursor.return_value
 
@@ -202,6 +202,15 @@ class TestMLStock(unittest.TestCase):
         self.assertEqual(result, 19)
         self.assertEqual(self.stock.DiffDay, '21d')
 
+    def test_check_stock_False(self):
+        self.stock.DiffDay = False
+
+        # Call the method being tested
+        result = self.stock.check_stock('ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, False)
+    
     @patch('yfinance.download')
     @patch('sqlite3.connect')
     def test_update1(self, mock_connect, mock_download):
@@ -307,6 +316,18 @@ class TestMLStock(unittest.TestCase):
         mock_download.assert_called_once_with(tickers='ABC', period=self.stock.DiffDay, interval='1mo', progress=False)
         mock_data.to_sql.assert_called_once_with('stock_table_mo', con=mock_conn, if_exists='append', index=True)
     
+    def test_update_False(self):
+        # Set lastdate ind sec
+        self.stock.LastDate = ['2022', '01', '01']  # Set the LastDate attribute to a known value
+        self.stock.r_df = pd.DataFrame({'ticker': ['ABC'], 'Datetime': ['2022-01-01']})
+        self.stock.down = 0
+        self.stock.DiffDay = False
+
+        # Call the method being tested
+        result = self.stock.update('Hour','ABC')
+        # Make assertions about the result
+        self.assertEqual(result,False)
+
     @patch('sqlite3.connect')
     @patch('pandas.read_sql')
     def test_getAllticker1(self,mock_read_sql,mock_connect):
@@ -701,6 +722,39 @@ class TestMLStock(unittest.TestCase):
             # assert that the result is as expected
             assert_frame_equal(result, for_test)
 
+    @patch('selenium.webdriver.Chrome')
+    @patch('pandas_datareader.nasdaq_trader.get_nasdaq_symbols')
+    @patch('sqlite3.connect')
+    def test_download_info(self, mock_connect, mock_nasdaq_symbols, mock_webdriver):
+        # Mock return values
+        mock_conn = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_nasdaq_symbols.return_value.index.tolist.return_value = ['AAPL', 'GOOG']
+        mock_driver = MagicMock()
+        mock_webdriver.return_value = mock_driver
+        mock_element = MagicMock()
+        mock_element.text = 'Industry Group'
+        mock_driver.find_elements.return_value = [mock_element, mock_element]
+
+        # Create instance of MyClass and call method under test
+        result = self.stock.download_info('AAPL')
+
+        mock_driver.get.assert_called_with('https://finance.yahoo.com/quote/AAPL/profile?p=AAPL')
+        self.assertEqual(result.to_dict(), {'Ticker': {0: 'AAPL'}, 'Industry Group': {0: 'Industry Group'}, 'Sector': {0: 'Industry Group'}, 'Index': {0: 'NASDAQ'}})
+    
+    def test_download_new_stock_False(self):
+        # Create a MagicMock object to replace the download_info function
+        mock_download_info = MagicMock(return_value=pd.DataFrame())
+        obj = self.stock
+        with patch.object(obj, 'download_info', mock_download_info):
+            # Mock the return value of the load_data_news function
+            mock_download_info.return_value = pd.DataFrame()
+            # call the code that uses my_function
+            result = obj.download_new_stock('AAPL')
+
+            # assert that the result is as expected
+            self.assertEqual(result, False)
+
 class ML_stock:
     def __init__(self):
         self.last = []
@@ -723,13 +777,14 @@ class ML_stock:
         try:
             self.LastDate = last[1].split()[0].split('-')
         except:
-            return False
+            self.LastDate = False
         return self.LastDate
 
     def getDiffDay(self):
         # Get datetime for now
         x = dt.datetime.now()
         if self.LastDate == False:
+            self.DiffDay = False
             return False
         count = 0
         DayM = 0
@@ -761,12 +816,14 @@ class ML_stock:
     def check_stock(self,ticker):
         conn = sqlite3.connect("stock.sqlite")
         down = 0
+        if self.DiffDay == False:
+            return False
         query = "SELECT `Index` FROM stock_info WHERE `ticker` = '%s'" % ticker
         for_ind = pd.read_sql(query, conn)
         ok = self.r_df.tail(1).Datetime.to_string().split()[2]
         #for get extra time in database
         if for_ind['Index'].values == 'NASDAQ':
-            self.DiffDay = str(self.DiffDay+2)+'d'
+            self.DiffDay = str(self.DiffDay+1)+'d'
             if ok == '09:30:00':down = 0
             elif ok == '10:30:00':down = 1
             elif ok == '11:30:00':down = 2
@@ -814,6 +871,8 @@ class ML_stock:
     def update(self,period,ticker):
         count = 0
         conn = sqlite3.connect("stock.sqlite")
+        if self.DiffDay == False:
+            return False
         # Select period to download
         if period == 'Hour':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1h',progress=False)
         elif period == 'Day':data = yf.download(tickers=ticker, period=self.DiffDay, interval='1d',progress=False)
@@ -1655,8 +1714,8 @@ class ML_stock:
         b = self.download_stock(Ticker)
         c = self.download_year(Ticker,True)
         d = self.download_quarter(Ticker,True)
-        e = self.D_news_one_Nasdaq(Ticker) # <---- ยังไม่ได้ลอง
-        g = self.download_place(Ticker) # <---- ยังไม่ได้ลอง
+        e = self.D_news_one_Nasdaq(Ticker)
+        g = self.download_place(Ticker)
     
     ##No test
     def change_stock(self,Ticker,period):
@@ -1690,15 +1749,15 @@ class ML_stock:
                 df2 = pd.concat([df2,df],ignore_index=True)
         return df2
 
-# if __name__ == '__main__':
-#     unittest.main(argv=['first-arg-is-ignored'], exit=False)
+if __name__ == '__main__':
+    unittest.main(argv=['first-arg-is-ignored'], exit=False)
 
 # ticker = 'AOT.BK'
 # text = "Im from Mars"
 # df = pd.DataFrame({'city': ['Bangkok','Bangkok'],'lat':[13.752494,13.752494],'long':[100.493509,100.493509]})
 # period = 'Day'
-a = ML_stock()
-a.download_new_stock('META')
+# a = ML_stock()
+# a.download_new_stock('META')
 # print(a.All_change_stock('Day'))
 # a.getLastDate('Hour','PTT.BK') 
 # a.getDiffDay()
