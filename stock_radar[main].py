@@ -1956,8 +1956,11 @@ class ML_stock:
         b = self.download_stock(Ticker)
         c = self.download_year(Ticker,True)
         d = self.download_quarter(Ticker,True)
-        e = self.D_news_one_Nasdaq(Ticker)
-        g = self.download_place(Ticker)
+        if Ticker in self.list_nasdaq():
+            e = self.news_one_Nasdaq(Ticker)
+        elif Ticker in self.list_crypto():
+            g = self.news_one_Crypto(Ticker)
+        h = self.download_place(Ticker)
     
     ##No test
     def change_stock(self,Ticker,period):
