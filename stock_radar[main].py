@@ -578,7 +578,6 @@ class TestMLStock(unittest.TestCase):
             # Check that self.news is not an empty list when self.load_data_news is called
             self.assertEqual(obj.news, [])
 
-
     def test_scrap_news_SET_old_news(self):
         # Mock the return value of the find_link function
         mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
@@ -600,7 +599,6 @@ class TestMLStock(unittest.TestCase):
 
                 # Check that self.news is not an empty list when self.load_data_news is called
                 self.assertNotEqual(obj.news, [])
-
 
     def test_next_page_scrap_success(self):
         # simulate a case where scrap_news_SET returns True on the second iteration
@@ -629,7 +627,6 @@ class TestMLStock(unittest.TestCase):
 
             # Check that the function returns the expected value
             self.assertTrue(result)
-
 
     def test_news_Nasdaq(self):
         # Call the method to test here
@@ -696,6 +693,39 @@ class TestMLStock(unittest.TestCase):
         assert_frame_equal(result, for_test)
 
     @patch('pandas.read_sql')
+    def test_download_place(self,mock_read_sql):
+        # Define the mock return values
+        mock_get_latlong_for_all_content = MagicMock(return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']}))
+        mock_check_index = pd.DataFrame({'Index':['NASDAQ']})
+        mock_get_news = pd.DataFrame({'Datetime': ['2023-03-02'], 'Ticker': ['AAPL'], 'Body': ['some news']})
+        # Set the mock return values for the read_sql function
+        mock_read_sql.side_effect = [
+            mock_check_index,
+            mock_get_news
+        ]
+        for_test = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
+        obj = self.stock
+        with patch.object(obj, 'get_latlong_for_all_content', mock_get_latlong_for_all_content):
+            # Mock the return value of the load_data_news function
+            mock_get_latlong_for_all_content.return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
+            # call the code that uses my_function
+            result = obj.download_place('ABC')
+
+            # assert that the result is as expected
+            assert_frame_equal(result, for_test)
+
+    @patch('pandas.read_sql')
+    def test_download_place_raiseError(self,mock_read_sql):
+        # Define the mock return values
+        mock_get_latlong_for_all_content = MagicMock(return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']}))
+        mock_check_index = pd.DataFrame({'Index':['NASDAQ']})
+        mock_get_news = pd.DataFrame({'Datetime': ['2023-03-02'], 'Ticker': ['AAPL'], 'Body': ['some news']})
+        # Set the mock return values for the read_sql function
+        mock_read_sql.side_effect = Exception('Some error')
+        result = self.stock.download_place('ABC')
+        self.assertEqual(result,False)
+
+    @patch('pandas.read_sql')
     def test_update_place(self,mock_read_sql):
         # Define the mock return values
         mock_check_index = pd.DataFrame({'Index':['SET100']})
@@ -722,6 +752,17 @@ class TestMLStock(unittest.TestCase):
             # assert that the result is as expected
             assert_frame_equal(result, for_test)
 
+    @patch('pandas.read_sql')
+    def test_update_place_raiseError(self,mock_read_sql):
+        # Mock the return value of trans_set100 and get_latlong_for_all_content to simulate data processing
+        mock_trans_set100 = MagicMock(return_value = pd.DataFrame({'Datetime': ['2022-03-02'], 'Ticker': ['ABC'], 'Body': ['some translated news']}))
+        mock_get_latlong_for_all_content = MagicMock(return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']}))
+
+        # Set the mock return values for the read_sql function
+        mock_read_sql.side_effect = Exception('Some error')
+        result = self.stock.update_place('AAPL')
+        self.assertEqual(result, False)
+    
     @patch('yfinance.download')
     def test_download_stock(self,mock_download):
         Ticker = 'AAPL'
@@ -961,6 +1002,62 @@ class TestMLStock(unittest.TestCase):
         mock_read_sql.return_value = df
         result = self.stock.download_quarter('AAV',False)
         assert_frame_equal(result, test)
+    
+    def test_update_quarter(self):
+        # Create a mock object for the download_quarter method
+        self.stock.download_quarter = MagicMock(return_value=pd.DataFrame({
+            'Quarterly': ['Q1', 'Q2', 'Q3', 'Q4'],
+            'Ticker': ['AAPL', 'AAPL', 'AAPL', 'AAPL']
+        }))
+        # Create a mock object for the pd.read_sql method
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Quarterly': ['Q1']
+        }))
+        # Call the function with a mocked ticker value
+        data = self.stock.update_quarter('mock_ticker')
+        # Assert that the function returned the expected data
+        self.assertEqual(data['Quarterly'].tolist(), ['Q2', 'Q3', 'Q4'])
+    
+    def test_update_quarter_raiseValue(self):
+        # Create a mock object for the download_quarter method
+        self.stock.download_quarter = MagicMock(return_value=pd.DataFrame({
+            'Quarterly': ['Q1', 'Q2', 'Q3', 'Q4'],
+            'Ticker': ['AAPL', 'AAPL', 'AAPL', 'AAPL']
+        }))
+        # Create a mock object for the pd.read_sql method
+        pd.read_sql = MagicMock(return_value= Exception('Some error'))
+        # Call the function with a mocked ticker value
+        data = self.stock.update_quarter('mock_ticker')
+        # Assert that the function returned the expected data
+        self.assertEqual(data, False)
+
+    def test_update_year(self):
+        # Create a mock object for the download_quarter method
+        self.stock.download_year = MagicMock(return_value=pd.DataFrame({
+            'Year': ['2019', '2020', '2021', '2022'],
+            'Ticker': ['AAPL', 'AAPL', 'AAPL', 'AAPL']
+        }))
+        # Create a mock object for the pd.read_sql method
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Year': ['2019']
+        }))
+        # Call the function with a mocked ticker value
+        data = self.stock.update_year('mock_ticker')
+        # Assert that the function returned the expected data
+        self.assertEqual(data['Year'].tolist(), ['2020', '2021', '2022'])
+    
+    def test_update_year_raiseError(self):
+        # Create a mock object for the download_quarter method
+        self.stock.download_year = MagicMock(return_value=pd.DataFrame({
+            'Year': ['2019', '2020', '2021', '2022'],
+            'Ticker': ['AAPL', 'AAPL', 'AAPL', 'AAPL']
+        }))
+        # Create a mock object for the pd.read_sql method
+        pd.read_sql = MagicMock(return_value=Exception('Some error'))
+        # Call the function with a mocked ticker value
+        data = self.stock.update_year('mock_ticker')
+        # Assert that the function returned the expected data
+        self.assertEqual(data, False)
 
     @patch('selenium.webdriver.Chrome')
     @patch('pandas_datareader.nasdaq_trader.get_nasdaq_symbols')
@@ -994,6 +1091,29 @@ class TestMLStock(unittest.TestCase):
 
             # assert that the result is as expected
             self.assertEqual(result, False)
+
+    def test_change_stock1(self):
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Open':[10],'Close':[10]
+        }))
+        for_test = pd.DataFrame({'Ticker':['AAPL'],'Diff':[0.0],'Ratio':['0.0%']})
+        result = self.stock.change_stock('AAPL','Day')
+        assert_frame_equal(result,for_test)
+
+    def test_change_stock2(self):
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Open':[15],'Close':[10]
+        }))
+        for_test = pd.DataFrame({'Ticker':['AAPL'],'Diff':[-5.0],'Ratio':['-50.0%']})
+        result = self.stock.change_stock('AAPL','Day')
+        assert_frame_equal(result,for_test)
+
+    def test_change_stock_valueError(self):
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Open':[15]
+        }))
+        result = self.stock.change_stock('AAPL','Day')
+        self.assertEqual(result,False)
 
 class ML_stock:
     def __init__(self):
@@ -1178,7 +1298,6 @@ class ML_stock:
         except:
             return False
 
-    ##No test
     #return all stock    
     def stock_name(self):
         conn = sqlite3.connect("stock.sqlite")
@@ -1604,36 +1723,41 @@ class ML_stock:
                 pass
         return data_thai
     
-    ##No test
     def download_place(self,ticker):
-        conn = sqlite3.connect("stock.sqlite")
-        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
-        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
-        query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE `Ticker` == '%s'" % (ticker)
-        get_news = pd.read_sql(query_news, conn)
-        if check_index == 'SET100':
-            eng = self.trans_set100(get_news)
-            place = self.get_latlong_for_all_content(eng)
-        else:
-            place = self.get_latlong_for_all_content(get_news)
-        place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+        try:
+            conn = sqlite3.connect("stock.sqlite")
+            query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+            check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+            query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE `Ticker` == '%s'" % (ticker)
+            get_news = pd.read_sql(query_news, conn)
+            if check_index == 'SET100':
+                eng = self.trans_set100(get_news)
+                place = self.get_latlong_for_all_content(eng)
+            else:
+                place = self.get_latlong_for_all_content(get_news)
+            place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+        except:
+            return False
         return place
     
     def update_place(self,ticker):
-        conn = sqlite3.connect("stock.sqlite")
-        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
-        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
-        query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
-        check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
-        query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
-        get_news = pd.read_sql(query_news, conn)
-        if check_index == 'SET100':
-            eng = self.trans_set100(get_news)
-            place = self.get_latlong_for_all_content(eng)
-        else:
-            place = self.get_latlong_for_all_content(get_news)
-        place.to_sql('stock_city',con=conn,if_exists='append',index=False)
-        return place
+        try:
+            conn = sqlite3.connect("stock.sqlite")
+            query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
+            check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
+            query_Dplace = "SELECT Datetime FROM stock_city WHERE `Ticker` = '%s'" % ticker
+            check_Dplace = pd.read_sql(query_Dplace, conn).sort_values(by=['Datetime'],ascending=False).values.tolist()[0][0]
+            query_news = "SELECT Datetime,ticker,body FROM stock_news WHERE datetime > '%s' and `Ticker` == '%s'" % (check_Dplace,ticker)
+            get_news = pd.read_sql(query_news, conn)
+            if check_index == 'SET100':
+                eng = self.trans_set100(get_news)
+                place = self.get_latlong_for_all_content(eng)
+            else:
+                place = self.get_latlong_for_all_content(get_news)
+            place.to_sql('stock_city',con=conn,if_exists='append',index=False)
+            return place
+        except:
+            return False
 
     def download_info(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
@@ -1664,7 +1788,6 @@ class ML_stock:
             pass
         return df2
 
-    ##No test
     def download_stock(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
         df_h = yf.download(tickers=Ticker, period='2y', interval='1h')
@@ -1914,41 +2037,44 @@ class ML_stock:
             thf2.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
         return thf2
     
-    ##No test
     def update_quarter(self,ticker):
-        thf2 = self.download_quarter(ticker,False)
-        a = len(thf2)
-        conn = sqlite3.connect("stock.sqlite")
-        count = 1
-        query = "SELECT Quarterly FROM stock_quarter WHERE `Ticker` == '%s'" % ticker
-        test = pd.read_sql(query, conn).values.tolist()[-1]
-        q = thf2['Quarterly']
-        for i in range(a):
-            if [list(thf2['Quarterly'].values)[i]] == test :
-                break
-            count += 1
-        data = thf2.iloc[count:,:]
-        data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
-        return data
+        try:
+            thf2 = self.download_quarter(ticker,False)
+            a = len(thf2)
+            conn = sqlite3.connect("stock.sqlite")
+            count = 1
+            query = "SELECT Quarterly FROM stock_quarter WHERE `Ticker` == '%s'" % ticker
+            test = pd.read_sql(query, conn).values.tolist()[-1]
+            q = thf2['Quarterly']
+            for i in range(a):
+                if [list(thf2['Quarterly'].values)[i]] == test :
+                    break
+                count += 1
+            data = thf2.iloc[count:,:]
+            data.to_sql('stock_quarter',con=conn,if_exists='append',index=False)
+            return data
+        except:
+            return False
     
-    ##No test
     def update_year(self,ticker):
-        thf2 = self.download_year(ticker,False)
-        a = len(thf2)
-        conn = sqlite3.connect("stock.sqlite")
-        count = 1
-        query = "SELECT Year FROM stock_financial WHERE `Ticker` == '%s'" % ticker
-        test = pd.read_sql(query, conn).values.tolist()[-1]
-        q = thf2['Year']
-        for i in range(a):
-            if [list(thf2['Year'].values)[i]] == test :
-                break
-            count += 1
-        data = thf2.iloc[count:,:]
-        data.to_sql('stock_financial',con=conn,if_exists='append',index=False)
-        return data
+        try:
+            thf2 = self.download_year(ticker,False)
+            a = len(thf2)
+            conn = sqlite3.connect("stock.sqlite")
+            count = 1
+            query = "SELECT Year FROM stock_financial WHERE `Ticker` == '%s'" % ticker
+            test = pd.read_sql(query, conn).values.tolist()[-1]
+            q = thf2['Year']
+            for i in range(a):
+                if [list(thf2['Year'].values)[i]] == test :
+                    break
+                count += 1
+            data = thf2.iloc[count:,:]
+            data.to_sql('stock_financial',con=conn,if_exists='append',index=False)
+            return data
+        except:
+            return False
 
-    ##No test
     def download_new_stock(self,Ticker):
         a = self.download_info(Ticker)
         if a.empty:
@@ -1962,7 +2088,6 @@ class ML_stock:
             g = self.news_one_Crypto(Ticker)
         h = self.download_place(Ticker)
     
-    ##No test
     def change_stock(self,Ticker,period):
         conn = sqlite3.connect("stock.sqlite")
         if period == 'Hour':
@@ -1982,7 +2107,6 @@ class ML_stock:
         Diff = pd.DataFrame({'Ticker': [Ticker],'Diff':[int((Close-Open)*100)/100], 'Ratio': [str(int(((Close-Open)/Close)*10000)/100) + '%']})
         return Diff
 
-    ##No test
     def All_change_stock(self,period):
         Ticker = self.getAllticker()
         df2 = pd.DataFrame()
