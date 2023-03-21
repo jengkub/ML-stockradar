@@ -591,6 +591,21 @@ class TestMLStock(unittest.TestCase):
         self.assertEqual(result, ["https://www.example.com/page1", "https://www.example.com/page2"])
 
     @patch('requests.get')
+    def test_find_link_not_found(self, mock_get):
+        # Define mock response object
+        mock_response = Mock()
+        mock_response.content = """"""
+
+        # Set up mock response from requests.get
+        mock_get.return_value = mock_response
+        # Define mock response object
+        mock_soup = MagicMock()
+        mock_soup.find_all.return_value = []
+
+        result = self.stock.find_link("https://www.example.com")
+        self.assertEqual(result, False)
+
+    @patch('requests.get')
     def test_not_find_link(self, mock_get):
         # Define mock response object
         mock_response = Mock()
@@ -763,6 +778,28 @@ class TestMLStock(unittest.TestCase):
         with patch.object(obj, 'get_latlong_for_all_content', mock_get_latlong_for_all_content):
             # Mock the return value of the load_data_news function
             mock_get_latlong_for_all_content.return_value = pd.DataFrame({'city': ['Bangkok'], 'lat': [13.7563], 'long': [100.5018], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
+            # call the code that uses my_function
+            result = obj.download_place('ABC')
+
+            # assert that the result is as expected
+            assert_frame_equal(result, for_test)
+
+    @patch('pandas.read_sql')
+    def test_download_place_test(self,mock_read_sql):
+        # Define the mock return values
+        mock_get_latlong_for_all_content = MagicMock(return_value = pd.DataFrame({'city': ['Test'], 'lat': [123], 'long': [123], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']}))
+        mock_check_index = pd.DataFrame({'Index':['NASDAQ']})
+        mock_get_news = pd.DataFrame({'Datetime': ['2023-03-02'], 'Ticker': ['AAPL'], 'Body': ['some news']})
+        # Set the mock return values for the read_sql function
+        mock_read_sql.side_effect = [
+            mock_check_index,
+            mock_get_news
+        ]
+        for_test = pd.DataFrame({'city': ['Test'], 'lat': [123], 'long': [123], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
+        obj = self.stock
+        with patch.object(obj, 'get_latlong_for_all_content', mock_get_latlong_for_all_content):
+            # Mock the return value of the load_data_news function
+            mock_get_latlong_for_all_content.return_value = pd.DataFrame({'city': ['Test'], 'lat': [123], 'long': [123], 'Datetime': ['2022-03-02'], 'Ticker': ['ABC']})
             # call the code that uses my_function
             result = obj.download_place('ABC')
 
@@ -1134,7 +1171,7 @@ class TestMLStock(unittest.TestCase):
     @patch('selenium.webdriver.Chrome')
     @patch('pandas_datareader.nasdaq_trader.get_nasdaq_symbols')
     @patch('sqlite3.connect')
-    def test_download_info(self, mock_connect, mock_nasdaq_symbols, mock_webdriver):
+    def test_download_info_set(self, mock_connect, mock_nasdaq_symbols, mock_webdriver):
         # Mock return values
         mock_conn = MagicMock()
         mock_connect.return_value = mock_conn
@@ -1153,6 +1190,29 @@ class TestMLStock(unittest.TestCase):
 
         mock_driver.get.assert_called_with('https://www.tradingview.com/symbols/AAPL/financials-income-statement/')
         self.assertEqual(result.to_dict(), {'Index': {0: 'SET'},'Industry Group': {0: 'Industry Group'},'Sector': {0: 'Industry Group'},'Ticker': {0: 'AAPL'}})
+    
+    @patch('selenium.webdriver.Chrome')
+    @patch('pandas_datareader.nasdaq_trader.get_nasdaq_symbols')
+    @patch('sqlite3.connect')
+    def test_download_info_nasdaq(self, mock_connect, mock_nasdaq_symbols, mock_webdriver):
+        # Mock return values
+        mock_conn = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_nasdaq_symbols.return_value.index.tolist.return_value = ['AAPL', 'GOOG']
+        mock_driver = MagicMock()
+        mock_webdriver.return_value = mock_driver
+        mock_element = MagicMock()
+        mock_index = MagicMock() 
+        mock_element.text = 'Industry Group'
+        mock_index.text = 'NASDAQ'
+        mock_driver.find_elements.side_effect = [
+            [mock_element, mock_element],[mock_index]
+        ]
+        # Create instance of MyClass and call method under test
+        result = self.stock.download_info('AAV')
+
+        mock_driver.get.assert_called_with('https://www.tradingview.com/symbols/AAV/financials-income-statement/')
+        self.assertEqual(result.to_dict(), {'Index': {0: 'NASDAQ'},'Industry Group': {0: 'Industry Group'},'Sector': {0: 'Industry Group'},'Ticker': {0: 'AAV'}})
 
     @patch('selenium.webdriver.Chrome')
     @patch('pandas_datareader.nasdaq_trader.get_nasdaq_symbols')
