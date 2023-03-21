@@ -840,21 +840,16 @@ class TestMLStock(unittest.TestCase):
         mock_driver = MagicMock()
         webdriver.Chrome.return_value = mock_driver
         # Set up the mock DataFrame
-        df = pd.DataFrame({'Index':['NASDAQ']})
-        mock_read_sql.return_value = df
         reesult = self.stock.download_year('AAPL',False)
-        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/NASDAQ-AAPL/financials-income-statement/')
+        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/AAPL/financials-income-statement/')
     
     @patch('pandas.read_sql')
     def test_download_year_set(self,mock_read_sql):
         webdriver.Chrome = MagicMock()
         mock_driver = MagicMock()
         webdriver.Chrome.return_value = mock_driver
-        # Set up the mock DataFrame
-        df = pd.DataFrame({'Index':['SET100']})
-        mock_read_sql.return_value = df
         reesult = self.stock.download_year('AAV',False)
-        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/SET-AAV/financials-income-statement/')
+        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/AAV/financials-income-statement/')
 
     @patch('pandas.read_sql')
     def test_download_quarter(self,mock_read_sql):
@@ -941,8 +936,6 @@ class TestMLStock(unittest.TestCase):
         test = pd.DataFrame(data,index=[0])
 
         # Set up the mock DataFrame
-        df = pd.DataFrame({'Index':['SET100']})
-        mock_read_sql.return_value = df
         result = self.stock.download_quarter('AAV',False)
         assert_frame_equal(result, test)
 
@@ -951,22 +944,16 @@ class TestMLStock(unittest.TestCase):
         webdriver.Chrome = MagicMock()
         mock_driver = MagicMock()
         webdriver.Chrome.return_value = mock_driver
-        # Set up the mock DataFrame
-        df = pd.DataFrame({'Index':['NASDAQ']})
-        mock_read_sql.return_value = df
         result = self.stock.download_quarter('AAPL',False)
-        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/NASDAQ-AAPL/financials-income-statement/')
+        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/AAPL/financials-income-statement/')
 
     @patch('pandas.read_sql')
     def test_download_quarter_set(self,mock_read_sql):
         webdriver.Chrome = MagicMock()
         mock_driver = MagicMock()
         webdriver.Chrome.return_value = mock_driver
-        # Set up the mock DataFrame
-        df = pd.DataFrame({'Index':['SET100']})
-        mock_read_sql.return_value = df
         result = self.stock.download_quarter('AAV',False)
-        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/SET-AAV/financials-income-statement/')
+        mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/AAV/financials-income-statement/')
     
     @patch('pandas.read_sql')
     def test_download_quarter(self,mock_read_sql):
@@ -1161,8 +1148,28 @@ class TestMLStock(unittest.TestCase):
         # Create instance of MyClass and call method under test
         result = self.stock.download_info('AAPL')
 
-        mock_driver.get.assert_called_with('https://finance.yahoo.com/quote/AAPL/profile?p=AAPL')
-        self.assertEqual(result.to_dict(), {'Ticker': {0: 'AAPL'}, 'Industry Group': {0: 'Industry Group'}, 'Sector': {0: 'Industry Group'}, 'Index': {0: 'NASDAQ'}})
+        mock_driver.get.assert_called_with('https://www.tradingview.com/symbols/AAPL/financials-income-statement/')
+        self.assertEqual(result.to_dict(), {})
+
+    @patch('selenium.webdriver.Chrome')
+    @patch('pandas_datareader.nasdaq_trader.get_nasdaq_symbols')
+    @patch('sqlite3.connect')
+    def test_download_info_raiseError(self, mock_connect, mock_nasdaq_symbols, mock_webdriver):
+        # Mock return values
+        mock_conn = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_nasdaq_symbols.return_value.index.tolist.return_value = ['AAPL', 'GOOG']
+        mock_driver = MagicMock()
+        mock_webdriver.return_value = mock_driver
+        mock_element = MagicMock()
+        mock_element.text = ''
+        mock_driver.find_elements.return_value = [mock_element, mock_element]
+
+        # Create instance of MyClass and call method under test
+        result = self.stock.download_info('ABC')
+
+        mock_driver.get.assert_called_with('https://www.tradingview.com/symbols/ABC/financials-income-statement/')
+        assert_frame_equal(result, pd.DataFrame())
     
     def test_download_new_stock_False(self):
         # Create a MagicMock object to replace the download_info function
@@ -1855,32 +1862,26 @@ class ML_stock:
 
     def download_info(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
-        exchange = ccxt.binance()
-        markets = exchange.load_markets()
-        usd_markets = [market for market in markets if market.endswith('/USDT')]
-        crypto_tickers = [market.replace('/','-').replace('USDT','USD') for market in usd_markets]
-        nasdaq_tickers = pdr.nasdaq_trader.get_nasdaq_symbols().index.tolist()
         op = webdriver.ChromeOptions()
         op.add_argument('headless') 
         driver = webdriver.Chrome(options=op)
         df2 = pd.DataFrame()
         InsSec = []
-        driver.get("https://finance.yahoo.com/quote/%s/profile?p=%s"% (Ticker,Ticker))
-        numlink = driver.find_elements(By.XPATH, '//span[@class="Fw(600)"]')
-        for i in numlink[:2]:
-            InsSec.append(i.text)
+        index = []
         try:
-            if Ticker in nasdaq_tickers:
-                df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['NASDAQ']})
-                df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
-                return df1
-            elif Ticker in crypto_tickers:
-                df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': ['CRYPTO100']})
-                df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
-                return df1
+            driver.get("https://finance.yahoo.com/quote/%s/profile?p=%s"% (Ticker,Ticker))
+            numlink = driver.find_elements(By.XPATH, '//span[@class="Fw(600)"]')
+            for i in numlink[:2]:
+                InsSec.append(i.text)
+            driver.get("https://www.tradingview.com/symbols/%s/financials-income-statement/"% Ticker)
+            Ilink = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div[1]/div[1]/div/div/div/div[2]/button[2]/span[1]/span/span/div/span[1]')
+            for i in Ilink:
+                index.append(i.text)
+            df1 = pd.DataFrame({'Ticker': [Ticker], 'Industry Group': [InsSec[0]], 'Sector': [InsSec[1]], 'Index': index})
+            df1.to_sql('stock_info',con=conn,if_exists='append',index=False)
+            return df1
         except:
-            pass
-        return df2
+            return df2
 
     def download_stock(self,Ticker):
         conn = sqlite3.connect("stock.sqlite")
@@ -1916,14 +1917,9 @@ class ML_stock:
         op.add_argument('headless')
         driver = webdriver.Chrome(options=op)
         thf2 = pd.DataFrame()
-        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
-        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
         tickerest = ticker.split('.')[0]
-        if check_index == 'SET100':
-            driver.get('https://www.tradingview.com/symbols/SET-%s/financials-income-statement/'% tickerest)
-        else:
-            driver.get('https://www.tradingview.com/symbols/NASDAQ-%s/financials-income-statement/'% tickerest)
-        time.sleep(4)
+        driver.get('https://www.tradingview.com/symbols/%s/financials-income-statement/'% tickerest)
+        time.sleep(2)
         year = driver.find_element("xpath",'//*[@id="FY"]')
         year.click()
         header = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[1]')
@@ -2037,14 +2033,8 @@ class ML_stock:
         op.add_argument('headless')
         driver = webdriver.Chrome(options=op)
         thf2 = pd.DataFrame()
-        query_index = "SELECT `Index` FROM stock_info WHERE `Ticker` = '%s'" % ticker
-        check_index = pd.read_sql(query_index, conn).values.tolist()[0][0]
         tickerest = ticker.split('.')[0]
-        if check_index == 'SET100':
-            driver.get('https://www.tradingview.com/symbols/SET-%s/financials-income-statement/'% tickerest)
-        else:
-            driver.get('https://www.tradingview.com/symbols/NASDAQ-%s/financials-income-statement/'% tickerest)
-
+        driver.get('https://www.tradingview.com/symbols/%s/financials-income-statement/'% tickerest)
         header = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[1]')
         raw1 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[2]')
         raw2 = driver.find_elements(By.XPATH, '//*[@id="js-category-content"]/div/div[2]/div[2]/div/div/div[5]/div[2]/div/div[1]/div[3]')
