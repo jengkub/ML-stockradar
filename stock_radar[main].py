@@ -832,7 +832,7 @@ class TestMLStock(unittest.TestCase):
         self.stock.download_stock(Ticker)
 
         # Assert that the mock functions were called with the expected arguments
-        mock_download.assert_called_with(tickers=Ticker, period='15y', interval='1mo')
+        mock_download.assert_called_with(tickers=Ticker, period='max', interval='1mo')
 
     @patch('pandas.read_sql')
     def test_download_year_nasdaq(self,mock_read_sql):
@@ -1889,9 +1889,14 @@ class ML_stock:
         df_d = yf.download(tickers=Ticker, period='10y', interval='1d')
         df_d['Ticker'] = Ticker
         df_d.index.names = ['Datetime']
-        df_mo = yf.download(tickers=Ticker, period='15y', interval='1mo')
-        df_mo['Ticker'] = Ticker
-        df_mo.index.names = ['Datetime']
+        try:
+            df_mo = yf.download(tickers=Ticker, period='max', interval='1mo')
+            df_mo['Ticker'] = Ticker
+            df_mo.index.names = ['Datetime']
+        except:
+            df_mo = yf.download(tickers=Ticker, period='15y', interval='1mo')
+            df_mo['Ticker'] = Ticker
+            df_mo.index.names = ['Datetime']
 
         df_h.to_sql('stock_table_hr',con=conn,if_exists='append',index=True)
         df_d.to_sql('stock_table_d',con=conn,if_exists='append',index=True)
