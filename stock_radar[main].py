@@ -52,6 +52,25 @@ class TestMLStock(unittest.TestCase):
 
         # Make assertions about the result
         self.assertEqual(result, ['2022', '01', '01'])
+
+    @patch('sqlite3.connect')
+    @patch('pandas.read_sql')
+    def test_getLastDate2(self, mock_read_sql, mock_connect):
+        # Set up the mock cursor
+        mock_cursor = mock_connect.return_value.cursor.return_value
+
+        # Set the expected return value of the mock cursor
+        mock_cursor.fetchone.return_value = ('ABC', '2022-01-01', 'industry', 'sector')
+
+        # Set up the mock DataFrame
+        df = pd.DataFrame({'ticker': ['ABC','ABC'], 'Datetime': ['2022-01-01 10:00:00','2022-02-02 10:00:00'], 'industryGroup': ['industry','industry'], 'sector': ['sector','sector']})
+        mock_read_sql.return_value = df
+
+        # Call the method being tested
+        result = self.stock.getLastDate('Hour','ABC')
+
+        # Make assertions about the result
+        self.assertEqual(result, ['2022', '02', '02'])
     
     @patch('sqlite3.connect')
     @patch('pandas.read_sql')
@@ -213,7 +232,7 @@ class TestMLStock(unittest.TestCase):
     
     @patch('yfinance.download')
     @patch('sqlite3.connect')
-    def test_update1(self, mock_connect, mock_download):
+    def test_update_day(self, mock_connect, mock_download):
         # Set lastdate ind sec
         self.stock.LastDate = ['2022', '01', '01']  # Set the LastDate attribute to a known value
         self.stock.r_df = pd.DataFrame({'ticker': ['ABC'], 'Datetime': ['2022-01-01']})
@@ -248,7 +267,7 @@ class TestMLStock(unittest.TestCase):
 
     @patch('yfinance.download')
     @patch('sqlite3.connect')
-    def test_update2(self, mock_connect, mock_download):
+    def test_update_hour(self, mock_connect, mock_download):
         # Set lastdate ind sec
         self.stock.LastDate = ['2022', '01', '01']  # Set the LastDate attribute to a known value
         self.stock.r_df = pd.DataFrame({'ticker': ['ABC'], 'Datetime': ['2022-01-01 10:00:00']})
@@ -283,7 +302,7 @@ class TestMLStock(unittest.TestCase):
     
     @patch('yfinance.download')
     @patch('sqlite3.connect')
-    def test_update3(self, mock_connect, mock_download):
+    def test_update_month(self, mock_connect, mock_download):
         # Set lastdate ind sec
         self.stock.LastDate = ['2022', '01', '01']  # Set the LastDate attribute to a known value
         self.stock.r_df = pd.DataFrame({'ticker': ['ABC'], 'Datetime': ['2022-01-01']})
@@ -381,7 +400,7 @@ class TestMLStock(unittest.TestCase):
         # Set up the mock DataFrame returned by the download method
         mock_data = df
         # Call the method being tested
-        result = self.stock.download_ticker('Hour','DELTA.BK')
+        result = self.stock.download_ticker('Hour','ABC')
 
         # Make assertions about the result
         assert_frame_equal(result,mock_data)
@@ -426,6 +445,19 @@ class TestMLStock(unittest.TestCase):
                                     'TTB', 'TU', 'VGI', 'WHA'])
         
     @patch('pandas.read_sql')
+    def test_list_set_SET_error(self, mock_read_sql):
+        # Set up the mock cursor
+        # Set up the mock DataFrame
+        mock_read_sql.return_value = Exception('Some error')
+
+        
+        # Call the method being tested
+        result = self.stock.list_set()
+        
+        # Make assertions about the result
+        self.assertEqual(result,False)
+        
+    @patch('pandas.read_sql')
     def test_list_set_NASDAQ(self, mock_read_sql):
         # Set up the mock cursor
         # Set up the mock DataFrame
@@ -446,10 +478,21 @@ class TestMLStock(unittest.TestCase):
                                 'EXC', 'FANG', 'FAST', 'FISV', 'FTNT', 'GOOG', 'GOOGL', 'HON', 'IDXX', 'ILMN', 'ISRG', 'JD', 'KHC', 'KLAC', 'LCID', 
                                 'LRCX', 'LULU', 'MAR', 'MCHP', 'MDLZ', 'MELI', 'MNST', 'MSFT', 'MU', 'ODFL', 'ORLY', 'PANW', 'PAYX', 'PCAR', 'PDD', 
                                 'PEP', 'QCOM', 'REGN', 'RIVN', 'ROST', 'SBUX', 'SGEN', 'SIRI', 'SNPS', 'TMUS', 'VRSK', 'VRTX', 'WDAY', 'XEL', 'ZM', 'ZS'])
+        
+    @patch('pandas.read_sql')
+    def test_list_set_NASDAQ_raiseError(self, mock_read_sql):
+        # Set up the mock DataFrame
+        mock_read_sql.return_value = Exception('Some error')
+
+        
+        # Call the method being tested
+        result = self.stock.list_nasdaq()
+        
+        # Make assertions about the result
+        self.assertEqual(result,False)
 
     @patch('pandas.read_sql')
     def test_list_set_CRYPTO(self, mock_read_sql):
-        # Set up the mock cursor
         # Set up the mock DataFrame
         df = pd.DataFrame({'Ticker': ['BTC', 'ETH', 'USDT', 'BNB', 'USDC', 'XRP', 'BUSD', 'ADA', 'DOGE', 'MATIC', 'HEX', 'SOL', 'DOT', 'SHIB', 'LTC', 'WTRX', 'TRX', 
                                       'AVAX', 'STETH', 'DAI', 'UNI7083', 'WBTC', 'ATOM', 'LINK', 'LEO', 'ETC', 'XMR', 'TON11419', 'OKB', 'BCH', 'APT21794', 'LDO', 
@@ -470,6 +513,18 @@ class TestMLStock(unittest.TestCase):
                                 'AAVE', 'EOS', 'WBNB', 'AXS', 'EGLD', 'FLOW', 'THETA', 'SAND', 'FRAX', 'LUNC', 'XTZ', 'TUSD', 'IMX10603', 'CHZ', 'MINA', 'HBTC', 
                                 'USDP', 'RPL', 'HT', 'KCS', 'CRV', 'BSV', 'FXS', 'DASH', 'ZEC', 'MKR', 'USDD', 'BTTOLD', 'BTT', 'CAKE', 'XEC', 'MIOTA', 'TNC5524', 
                                 'GMX11857', 'SNX', 'KLAY', 'BGB', 'NEO', 'TWT', 'GUSD', 'OP', 'RUNE', 'LRC', 'FTT', 'AGIX', 'PAXG', 'OSMO', 'XRD', 'BABYDOGE', 'GT', 'ZIL', 'CVX'])
+        
+    @patch('pandas.read_sql')
+    def test_list_set_CRYPTO_raiseError(self, mock_read_sql):
+        # Set up the mock DataFrame
+        mock_read_sql.return_value = Exception('Some error')
+
+        
+        # Call the method being tested
+        result = self.stock.list_crypto()
+        
+        # Make assertions about the result
+        self.assertEqual(result,False)
     
 
     @patch('sqlite3.connect')
@@ -777,7 +832,7 @@ class TestMLStock(unittest.TestCase):
         self.stock.download_stock(Ticker)
 
         # Assert that the mock functions were called with the expected arguments
-        mock_download.assert_called_with(tickers=Ticker, period='max', interval='1mo')
+        mock_download.assert_called_with(tickers=Ticker, period='15y', interval='1mo')
 
     @patch('pandas.read_sql')
     def test_download_year_nasdaq(self,mock_read_sql):
@@ -1003,7 +1058,7 @@ class TestMLStock(unittest.TestCase):
         result = self.stock.download_quarter('AAV',False)
         assert_frame_equal(result, test)
     
-    def test_update_quarter(self):
+    def test_update_quarter1(self):
         # Create a mock object for the download_quarter method
         self.stock.download_quarter = MagicMock(return_value=pd.DataFrame({
             'Quarterly': ['Q1', 'Q2', 'Q3', 'Q4'],
@@ -1017,6 +1072,21 @@ class TestMLStock(unittest.TestCase):
         data = self.stock.update_quarter('mock_ticker')
         # Assert that the function returned the expected data
         self.assertEqual(data['Quarterly'].tolist(), ['Q2', 'Q3', 'Q4'])
+
+    def test_update_quarter2(self):
+        # Create a mock object for the download_quarter method
+        self.stock.download_quarter = MagicMock(return_value=pd.DataFrame({
+            'Quarterly': ['Q1', 'Q2', 'Q3', 'Q4'],
+            'Ticker': ['AAPL', 'AAPL', 'AAPL', 'AAPL']
+        }))
+        # Create a mock object for the pd.read_sql method
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Quarterly': ['Q1','Q2']
+        }))
+        # Call the function with a mocked ticker value
+        data = self.stock.update_quarter('mock_ticker')
+        # Assert that the function returned the expected data
+        self.assertEqual(data['Quarterly'].tolist(), ['Q3', 'Q4'])
     
     def test_update_quarter_raiseValue(self):
         # Create a mock object for the download_quarter method
@@ -1031,7 +1101,7 @@ class TestMLStock(unittest.TestCase):
         # Assert that the function returned the expected data
         self.assertEqual(data, False)
 
-    def test_update_year(self):
+    def test_update_year1(self):
         # Create a mock object for the download_quarter method
         self.stock.download_year = MagicMock(return_value=pd.DataFrame({
             'Year': ['2019', '2020', '2021', '2022'],
@@ -1045,6 +1115,21 @@ class TestMLStock(unittest.TestCase):
         data = self.stock.update_year('mock_ticker')
         # Assert that the function returned the expected data
         self.assertEqual(data['Year'].tolist(), ['2020', '2021', '2022'])
+
+    def test_update_year2(self):
+        # Create a mock object for the download_quarter method
+        self.stock.download_year = MagicMock(return_value=pd.DataFrame({
+            'Year': ['2019', '2020', '2021', '2022'],
+            'Ticker': ['AAPL', 'AAPL', 'AAPL', 'AAPL']
+        }))
+        # Create a mock object for the pd.read_sql method
+        pd.read_sql = MagicMock(return_value=pd.DataFrame({
+            'Year': ['2019','2020']
+        }))
+        # Call the function with a mocked ticker value
+        data = self.stock.update_year('mock_ticker')
+        # Assert that the function returned the expected data
+        self.assertEqual(data['Year'].tolist(), ['2021', '2022'])
     
     def test_update_year_raiseError(self):
         # Create a mock object for the download_quarter method
@@ -1310,38 +1395,47 @@ class ML_stock:
     #return all stock in SET100    
     def list_set(self):
         self.stock = []
-        conn = sqlite3.connect("stock.sqlite")
-        cur = conn.cursor()
-        query = "select Ticker from stock_info where `Index` == 'SET100'"
-        stock = pd.read_sql(query,conn)
-        stock = list(stock['Ticker'])
-        for i in stock:
-            temp = i.split('.')
-            self.stock.append(temp[0])
-        return self.stock
+        try:
+            conn = sqlite3.connect("stock.sqlite")
+            cur = conn.cursor()
+            query = "select Ticker from stock_info where `Index` == 'SET100'"
+            stock = pd.read_sql(query,conn)
+            stock = list(stock['Ticker'])
+            for i in stock:
+                temp = i.split('.')
+                self.stock.append(temp[0])
+            return self.stock
+        except:
+            return False
     
     #return all stock in NASDAQ
     def list_nasdaq(self):
         self.stock = []
-        conn = sqlite3.connect("stock.sqlite")
-        cur = conn.cursor()
-        query = "select Ticker from stock_info where `Index` == 'NASDAQ'"
-        stock = pd.read_sql(query,conn)
-        self.stock = list(stock['Ticker'])
-        return self.stock
+        try:
+            conn = sqlite3.connect("stock.sqlite")
+            cur = conn.cursor()
+            query = "select Ticker from stock_info where `Index` == 'NASDAQ'"
+            stock = pd.read_sql(query,conn)
+            self.stock = list(stock['Ticker'])
+            return self.stock
+        except:
+            return False
     
     #return all Crypto100 
     def list_crypto(self):
         self.stock = []
-        conn = sqlite3.connect("stock.sqlite")
-        cur = conn.cursor()
-        query = "select Ticker from stock_info where `Index` == 'CRYPTO100'"
-        stock = pd.read_sql(query,conn)
-        stock = list(stock['Ticker'])
-        for i in stock:
-            temp = i.split('-')
-            self.stock.append(temp[0])
-        return self.stock
+        try:
+            conn = sqlite3.connect("stock.sqlite")
+            cur = conn.cursor()
+            query = "select Ticker from stock_info where `Index` == 'CRYPTO100'"
+            stock = pd.read_sql(query,conn)
+            stock = list(stock['Ticker'])
+            for i in stock:
+                temp = i.split('-')
+                self.stock.append(temp[0])
+            return self.stock
+        except:
+            return False
 
     #save news into database
     def save_data_news(self, data):
@@ -1792,10 +1886,10 @@ class ML_stock:
         conn = sqlite3.connect("stock.sqlite")
         df_h = yf.download(tickers=Ticker, period='2y', interval='1h')
         df_h['Ticker'] = Ticker
-        df_d = yf.download(tickers=Ticker, period='max', interval='1d')
+        df_d = yf.download(tickers=Ticker, period='10y', interval='1d')
         df_d['Ticker'] = Ticker
         df_d.index.names = ['Datetime']
-        df_mo = yf.download(tickers=Ticker, period='max', interval='1mo')
+        df_mo = yf.download(tickers=Ticker, period='15y', interval='1mo')
         df_mo['Ticker'] = Ticker
         df_mo.index.names = ['Datetime']
 
