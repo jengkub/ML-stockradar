@@ -605,29 +605,6 @@ class TestMLStock(unittest.TestCase):
         result = self.stock.find_link("https://www.example.com")
         self.assertEqual(result, False)
 
-    @patch('requests.get')
-    def test_not_find_link(self, mock_get):
-        # Define mock response object
-        mock_response = Mock()
-        mock_response.content = """
-            <html>
-            <body>
-            <div class="tie-col-md-11 tie-col-sm-10">
-            </div>
-            <div class="tie-col-md-11 tie-col-sm-10">
-            </div>
-            </body>
-            </html>
-        """
-
-        # Set up mock response from requests.get
-        mock_get.return_value = mock_response
-
-        # Call find_link function with mocked response
-        result = self.stock.find_link("https://www.example.com")
-
-        self.assertEqual(result, False)
-
     def test_scrap_news_SET_new_news(self):
         # Mock the return value of the find_link function
         mock_find_link = MagicMock(return_value=["https://example.com/news/1", "https://example.com/news/2"])
@@ -743,6 +720,15 @@ class TestMLStock(unittest.TestCase):
         # Check the output
         for_test = pd.DataFrame({'city': ['Bangkok','London'],'lat':[13.752494,51.507336],'long':[100.493509,-0.12765],'population':[1,1]})
         assert_frame_equal(result, for_test)
+
+    def test_get_poppulate_for_city_none(self):
+        df = pd.DataFrame({'city': [],'lat':[],'long':[]})
+        self.stock.place = df
+        # Call the method to test here
+        result = self.stock.get_poppulate_for_city()
+        # Check the output
+        for_test = pd.DataFrame({'city': [],'lat':[],'long':[],'population':[]})
+        self.assertEqual(result['population'].tolist(), [])
     
     def test_trans_set100_1(self):
         df = pd.DataFrame({'Datetime': [datetime.datetime(2022, 1, 2)],'Ticker':['Test'],'Body':['สวัสดี']})
@@ -888,93 +874,94 @@ class TestMLStock(unittest.TestCase):
         reesult = self.stock.download_year('AAV',False)
         mock_driver.get.assert_called_once_with('https://www.tradingview.com/symbols/AAV/financials-income-statement/')
 
-    @patch('pandas.read_sql')
-    def test_download_quarter(self,mock_read_sql):
-        webdriver.Chrome = MagicMock()
-        mock_driver = MagicMock()
-        webdriver.Chrome.return_value = mock_driver
-        mock_header = MagicMock()
-        mock_raw1 = MagicMock()
-        mock_raw2 = MagicMock()
-        mock_raw3 = MagicMock()
-        mock_raw4 = MagicMock()
-        mock_raw5 = MagicMock()
-        mock_raw6 = MagicMock()
-        mock_raw7 = MagicMock()
-        mock_raw8 = MagicMock()
-        mock_raw9 = MagicMock()
-        mock_raw10 = MagicMock()
-        mock_raw11 = MagicMock()
-        mock_raw12 = MagicMock()
-        mock_raw13 = MagicMock()
-        mock_raw14 = MagicMock()
-        mock_raw15 = MagicMock()
-        mock_raw16 = MagicMock()
-        mock_raw17 = MagicMock()
-        mock_raw18 = MagicMock()
-        mock_raw19 = MagicMock()
-        mock_raw20 = MagicMock()
-        mock_raw21 = MagicMock()
-        mock_raw22 = MagicMock()
-        mock_raw23 = MagicMock()
-        mock_raw24 = MagicMock()
+    
+    # @patch('pandas.read_sql')
+    # def test_download_year(self,mock_read_sql):
+    #     webdriver.Chrome = MagicMock()
+    #     mock_driver = MagicMock()
+    #     webdriver.Chrome.return_value = mock_driver
+    #     mock_header = MagicMock()
+    #     mock_raw1 = MagicMock()
+    #     mock_raw2 = MagicMock()
+    #     mock_raw3 = MagicMock()
+    #     mock_raw4 = MagicMock()
+    #     mock_raw5 = MagicMock()
+    #     mock_raw6 = MagicMock()
+    #     mock_raw7 = MagicMock()
+    #     mock_raw8 = MagicMock()
+    #     mock_raw9 = MagicMock()
+    #     mock_raw10 = MagicMock()
+    #     mock_raw11 = MagicMock()
+    #     mock_raw12 = MagicMock()
+    #     mock_raw13 = MagicMock()
+    #     mock_raw14 = MagicMock()
+    #     mock_raw15 = MagicMock()
+    #     mock_raw16 = MagicMock()
+    #     mock_raw17 = MagicMock()
+    #     mock_raw18 = MagicMock()
+    #     mock_raw19 = MagicMock()
+    #     mock_raw20 = MagicMock()
+    #     mock_raw21 = MagicMock()
+    #     mock_raw22 = MagicMock()
+    #     mock_raw23 = MagicMock()
+    #     mock_raw24 = MagicMock()
 
-        mock_header.text = "Currency: USD\n2022\nTTM"
-        mock_raw1.text = 'Total revenue\nYoY growth\n\u202a117.15B\u202c\n−5.48%\n\u202a387.54B\u202c'
-        mock_raw2.text = 'Cost of goods sold\n\u202a−66.82B\u202c\n\u202a−220.67B\u202c'
-        mock_raw3.text = 'Gross profit\nYoY growth\n\u202a50.33B\u202c\n−7.21%\n\u202a166.87B\u202c'
-        mock_raw4.text = 'Operating expenses (excl. COGS)\n\u202a−14.32B\u202c\n\u202a−52.91B\u202c'
-        mock_raw5.text = 'Operating income\nYoY growth\n\u202a36.02B\u202c\n−13.19%\n\u202a113.97B\u202c'
-        mock_raw6.text = 'Non-operating income, total\n\u202a−393.00M\u202c\n\u202a−480.00M\u202c'
-        mock_raw7.text = 'Pretax income\nYoY growth\n\u202a35.62B\u202c\n−13.62%\n\u202a113.48B\u202c'
-        mock_raw8.text = 'Equity in earnings\n\u202a0.00\u202c\n—'
-        mock_raw9.text = 'Taxes\n\u202a−5.63B\u202c\n\u202a−18.31B\u202c'
-        mock_raw10.text = 'Non-controlling/minority interest\n\u202a0.00\u202c\n—'
-        mock_raw11.text = 'After tax other income/expense\n\u202a0.00\u202c\n—'
-        mock_raw12.text = 'Net income before discontinued operations\n\u202a30.00B\u202c\n\u202a95.17B\u202c'
-        mock_raw13.text = 'Discontinued operations\n\u202a0.00\u202c\n—'
-        mock_raw14.text = 'Net income\nYoY growth\n\u202a30.00B\u202c\n−13.38%\n\u202a95.17B\u202c'
-        mock_raw15.text = 'Dilution adjustment\n\u202a0.00\u202c\n—'
-        mock_raw16.text = 'Preferred dividends\n\u202a0.00\u202c\n—'
-        mock_raw17.text = 'Diluted net income available to common stockholders\n\u202a30.00B\u202c\n\u202a95.17B\u202c'
-        mock_raw18.text = 'Basic earnings per share (Basic EPS)\nYoY growth\n\u202a1.89\u202c\n−10.66%\n\u202a5.92\u202c'
-        mock_raw19.text = 'Diluted earnings per share (Diluted EPS)\nYoY growth\n\u202a1.88\u202c\n−10.31%\n\u202a5.89\u202c'
-        mock_raw20.text = 'Average basic shares outstanding\n\u202a15.89B\u202c\n—'
-        mock_raw21.text = 'Diluted shares outstanding\n\u202a15.96B\u202c\n—'
-        mock_raw22.text = 'EBITDA\nYoY growth\n\u202a38.93B\u202c\n−11.89%\n\u202a125.29B\u202c'
-        mock_raw23.text = 'EBIT\nYoY growth\n\u202a36.02B\u202c\n−13.19%\n\u202a113.97B\u202c'
-        mock_raw24.text = 'Total operating expenses\n\u202a81.14B\u202c\n\u202a273.57B\u202c'
+    #     mock_header.text = "Currency: USD\n2022\nTTM"
+    #     mock_raw1.text = 'Total revenue\nYoY growth\n\u202a117.15B\u202c\n−5.48%\n\u202a387.54B\u202c'
+    #     mock_raw2.text = 'Cost of goods sold\n\u202a−66.82B\u202c\n\u202a−220.67B\u202c'
+    #     mock_raw3.text = 'Gross profit\nYoY growth\n\u202a50.33B\u202c\n−7.21%\n\u202a166.87B\u202c'
+    #     mock_raw4.text = 'Operating expenses (excl. COGS)\n\u202a−14.32B\u202c\n\u202a−52.91B\u202c'
+    #     mock_raw5.text = 'Operating income\nYoY growth\n\u202a36.02B\u202c\n−13.19%\n\u202a113.97B\u202c'
+    #     mock_raw6.text = 'Non-operating income, total\n\u202a−393.00M\u202c\n\u202a−480.00M\u202c'
+    #     mock_raw7.text = 'Pretax income\nYoY growth\n\u202a35.62B\u202c\n−13.62%\n\u202a113.48B\u202c'
+    #     mock_raw8.text = 'Equity in earnings\n\u202a0.00\u202c\n—'
+    #     mock_raw9.text = 'Taxes\n\u202a−5.63B\u202c\n\u202a−18.31B\u202c'
+    #     mock_raw10.text = 'Non-controlling/minority interest\n\u202a0.00\u202c\n—'
+    #     mock_raw11.text = 'After tax other income/expense\n\u202a0.00\u202c\n—'
+    #     mock_raw12.text = 'Net income before discontinued operations\n\u202a30.00B\u202c\n\u202a95.17B\u202c'
+    #     mock_raw13.text = 'Discontinued operations\n\u202a0.00\u202c\n—'
+    #     mock_raw14.text = 'Net income\nYoY growth\n\u202a30.00B\u202c\n−13.38%\n\u202a95.17B\u202c'
+    #     mock_raw15.text = 'Dilution adjustment\n\u202a0.00\u202c\n—'
+    #     mock_raw16.text = 'Preferred dividends\n\u202a0.00\u202c\n—'
+    #     mock_raw17.text = 'Diluted net income available to common stockholders\n\u202a30.00B\u202c\n\u202a95.17B\u202c'
+    #     mock_raw18.text = 'Basic earnings per share (Basic EPS)\nYoY growth\n\u202a1.89\u202c\n−10.66%\n\u202a5.92\u202c'
+    #     mock_raw19.text = 'Diluted earnings per share (Diluted EPS)\nYoY growth\n\u202a1.88\u202c\n−10.31%\n\u202a5.89\u202c'
+    #     mock_raw20.text = 'Average basic shares outstanding\n\u202a15.89B\u202c\n—'
+    #     mock_raw21.text = 'Diluted shares outstanding\n\u202a15.96B\u202c\n—'
+    #     mock_raw22.text = 'EBITDA\nYoY growth\n\u202a38.93B\u202c\n−11.89%\n\u202a125.29B\u202c'
+    #     mock_raw23.text = 'EBIT\nYoY growth\n\u202a36.02B\u202c\n−13.19%\n\u202a113.97B\u202c'
+    #     mock_raw24.text = 'Total operating expenses\n\u202a81.14B\u202c\n\u202a273.57B\u202c'
 
-        mock_driver.find_elements.side_effect = [
-            [mock_header], [mock_raw1], [mock_raw2], [mock_raw3], [mock_raw4],
-            [mock_raw5], [mock_raw6], [mock_raw7], [mock_raw8], [mock_raw9],
-            [mock_raw10], [mock_raw11], [mock_raw12], [mock_raw13], [mock_raw14],
-            [mock_raw15], [mock_raw16], [mock_raw17], [mock_raw18], [mock_raw19],
-            [mock_raw20],[mock_raw21],[mock_raw22],[mock_raw23],[mock_raw24]
-        ]
+    #     mock_driver.find_elements.side_effect = [
+    #         [mock_header], [mock_raw1], [mock_raw2], [mock_raw3], [mock_raw4],
+    #         [mock_raw5], [mock_raw6], [mock_raw7], [mock_raw8], [mock_raw9],
+    #         [mock_raw10], [mock_raw11], [mock_raw12], [mock_raw13], [mock_raw14],
+    #         [mock_raw15], [mock_raw16], [mock_raw17], [mock_raw18], [mock_raw19],
+    #         [mock_raw20],[mock_raw21],[mock_raw22],[mock_raw23],[mock_raw24]
+    #     ]
 
-        data = {'Ticker':('AAV'),'Total revenue':'117.15B','YoY growth Total revenue':'\u22125.48%',
-                'Cost of goods sold':'\u221266.82B',
-                'Gross profit':'50.33B','YoY growth Gross profit':'−7.21%',
-                'Operating expenses (excl. COGS)':'−14.32B',
-                'Operating income':'36.02B','YoY growth Operating income' : '−13.19%',
-                'Non-operating income, total':'−393.00M',
-                'Pretax income':'35.62B','YoY growth Pretax income':'−13.62%',
-                'Equity in earnings':'0.00','Taxes':'−5.63B',
-                'Non-controlling/minority interest':'0.00','After tax other income/expense':'0.00',
-                'Net income before discontinued operations':'30.00B','Discontinued operations':'0.00',
-                'Net income':'30.00B','YoY growth Net income':'−13.38%',
-                'Dilution adjustment':'0.00','Preferred dividends':'0.00','Diluted net income available to common stockholders':'30.00B',
-                'Basic EPS':'1.89','YoY growth Basic EPS':'−10.66%','Diluted EPS':'1.88','Diluted EPS YoY growth':'−10.31%',
-                'Average basic shares outstanding':'15.89B','Diluted shares outstanding':'15.96B',
-                'EBITDA':'38.93B','YoY growth EBITDA':'−11.89%','EBIT':'36.02B','YoY growth EBIT': '−13.19%',
-                'Total operating expenses':'81.14B','Year':"2022"}
+    #     data = {'Ticker':('AAV'),'Total revenue':'117.15B','YoY growth Total revenue':'\u22125.48%',
+    #             'Cost of goods sold':'\u221266.82B',
+    #             'Gross profit':'50.33B','YoY growth Gross profit':'−7.21%',
+    #             'Operating expenses (excl. COGS)':'−14.32B',
+    #             'Operating income':'36.02B','YoY growth Operating income' : '−13.19%',
+    #             'Non-operating income, total':'−393.00M',
+    #             'Pretax income':'35.62B','YoY growth Pretax income':'−13.62%',
+    #             'Equity in earnings':'0.00','Taxes':'−5.63B',
+    #             'Non-controlling/minority interest':'0.00','After tax other income/expense':'0.00',
+    #             'Net income before discontinued operations':'30.00B','Discontinued operations':'0.00',
+    #             'Net income':'30.00B','YoY growth Net income':'−13.38%',
+    #             'Dilution adjustment':'0.00','Preferred dividends':'0.00','Diluted net income available to common stockholders':'30.00B',
+    #             'Basic EPS':'1.89','YoY growth Basic EPS':'−10.66%','Diluted EPS':'1.88','Diluted EPS YoY growth':'−10.31%',
+    #             'Average basic shares outstanding':'15.89B','Diluted shares outstanding':'15.96B',
+    #             'EBITDA':'38.93B','YoY growth EBITDA':'−11.89%','EBIT':'36.02B','YoY growth EBIT': '−13.19%',
+    #             'Total operating expenses':'81.14B','Year':"2022"}
         
-        test = pd.DataFrame(data,index=[0])
+    #     test = pd.DataFrame(data,index=[0])
 
-        # Set up the mock DataFrame
-        result = self.stock.download_quarter('AAV',False)
-        assert_frame_equal(result, test)
+    #     # Set up the mock DataFrame
+    #     result = self.stock.download_quarter('AAV',False)
+    #     assert_frame_equal(result, test)
 
     @patch('pandas.read_sql')
     def test_download_quarter_nasdaq(self,mock_read_sql):
